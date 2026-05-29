@@ -1,0 +1,22 @@
+# Dependências do Node
+node_modules/
+
+# Builds do Vite
+dist/
+
+# Arquivos locais e compilações do Android/Capacitor
+android/app/build/
+android/build/
+android/local.properties
+.gradle/
+
+# Arquivos do sistema e IDEs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

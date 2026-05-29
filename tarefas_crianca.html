@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minhas Tarefas do Dia! 🌟</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --shadow: 0 6px 20px rgba(0,0,0,0.12); --card-bg: #FFFEF7; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Baloo 2', cursive;
+    background: linear-gradient(180deg, #b8e4ff 0%, #d4f1c4 100%);
+    min-height: 100vh; padding: 20px;
+    position: relative; overflow-x: hidden;
+  }
+
+  /* ── Clouds ── */
+  .cloud { position:fixed; background:white; border-radius:50px; opacity:.85; z-index:0; animation:floatCloud linear infinite; }
+  .cloud::before,.cloud::after { content:''; position:absolute; background:white; border-radius:50%; }
+  .cloud.c1 { width:120px;height:40px;top:8%;left:-140px;animation-duration:35s; }
+  .cloud.c1::before{width:60px;height:60px;top:-30px;left:15px}.cloud.c1::after{width:40px;height:40px;top:-20px;left:55px}
+  .cloud.c2 { width:90px;height:30px;top:18%;left:-110px;animation-duration:45s;animation-delay:-15s; }
+  .cloud.c2::before{width:45px;height:45px;top:-22px;left:10px}.cloud.c2::after{width:35px;height:35px;top:-15px;left:40px}
+  .cloud.c3 { width:150px;height:50px;top:5%;left:-170px;animation-duration:55s;animation-delay:-28s; }
+  .cloud.c3::before{width:70px;height:70px;top:-35px;left:20px}.cloud.c3::after{width:50px;height:50px;top:-25px;left:70px}
+  @keyframes floatCloud{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 200px))}}
+
+  .star-deco{position:fixed;font-size:1.5rem;animation:twinkle 2s ease-in-out infinite;z-index:0;pointer-events:none}
+  @keyframes twinkle{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}
+
+  /* ── Layout ── */
+  .container { max-width:780px; margin:0 auto; position:relative; z-index:1; }
+
+  /* ── Header ── */
+  .header { text-align:center; margin-bottom:24px; }
+  .sun-icon { font-size:5rem; display:block; animation:spinSun 20s linear infinite; filter:drop-shadow(0 4px 12px rgba(255,200,0,.5)); line-height:1; margin-bottom:8px; }
+  @keyframes spinSun{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .title-box { background:linear-gradient(135deg,#FF6CAB,#FF9DC1,#FFD166); border-radius:30px; padding:16px 30px; display:inline-block; box-shadow:0 8px 24px rgba(255,108,171,.35),0 0 0 5px white; }
+  .title-box h1 { font-size:2.4rem; font-weight:900; color:white; text-shadow:3px 3px 0 rgba(0,0,0,.15); letter-spacing:1px; line-height:1.1; }
+  .title-box .subtitle { font-size:1rem; color:rgba(255,255,255,.95); font-weight:600; margin-top:4px; }
+  .name-badge { background:white; border-radius:20px; padding:8px 22px; display:inline-block; margin-top:12px; box-shadow:var(--shadow); font-size:1.1rem; color:#555; font-weight:700; }
+  .name-badge span { color:#FF6CAB; font-size:1.2rem; }
+
+  /* ── Days ── */
+  .days-row { display:flex; gap:7px; justify-content:center; margin-bottom:22px; flex-wrap:wrap; }
+  .day-btn { background:white; border:3px solid transparent; border-radius:16px; padding:7px 13px; cursor:pointer; font-family:'Baloo 2',cursive; font-weight:800; font-size:.9rem; color:#888; transition:all .2s; box-shadow:0 3px 10px rgba(0,0,0,.1); }
+  .day-btn:hover{transform:translateY(-2px)}
+  .day-btn.active { background:linear-gradient(135deg,#FF6CAB,#FFD166); color:white; border-color:white; transform:scale(1.08); box-shadow:0 6px 18px rgba(255,108,171,.4); }
+
+  /* ── Celebration ── */
+  .celebration { display:none; text-align:center; padding:22px; background:linear-gradient(135deg,#FFD166,#FF6CAB,#C5A3FF); border-radius:24px; margin-bottom:22px; box-shadow:0 8px 28px rgba(255,108,171,.35); animation:popIn .5s cubic-bezier(.34,1.56,.64,1); }
+  .celebration.show{display:block}
+  .celebration h2{font-size:2rem;color:white;font-weight:900;text-shadow:2px 2px 0 rgba(0,0,0,.15);margin-bottom:6px}
+  .celebration p{color:rgba(255,255,255,.92);font-size:1rem;font-weight:600}
+  .confetti-row{font-size:1.8rem;letter-spacing:4px}
+  @keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* ── Progress ── */
+  .progress-section { background:white; border-radius:24px; padding:18px 22px; box-shadow:var(--shadow); margin-bottom:22px; text-align:center; }
+  .progress-label { font-size:1rem; font-weight:800; color:#555; margin-bottom:10px; }
+  .progress-label .count{color:#FF6CAB;font-size:1.3rem}
+  .progress-track { background:#f0f0f0; border-radius:20px; height:20px; overflow:hidden; box-shadow:inset 0 2px 6px rgba(0,0,0,.08); }
+  .progress-fill { height:100%; border-radius:20px; background:linear-gradient(90deg,#FF6CAB,#FFD166,#63E6BE); transition:width .6s cubic-bezier(.34,1.56,.64,1); background-size:200% 100%; animation:shimmer 2s linear infinite; }
+  @keyframes shimmer{0%{background-position:200% center}100%{background-position:0% center}}
+  .stars-row{display:flex;justify-content:center;gap:6px;margin-top:12px}
+  .star-item{font-size:1.8rem;transition:all .3s cubic-bezier(.34,1.56,.64,1);filter:grayscale(1) opacity(.3)}
+  .star-item.lit{filter:none;animation:starPop .4s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes starPop{0%{transform:scale(1)}50%{transform:scale(1.5) rotate(20deg)}100%{transform:scale(1)}}
+
+  /* ── Drag hint ── */
+  .drag-hint {
+    text-align:center; margin-bottom:14px;
+    font-size:.85rem; color:rgba(0,0,0,.4); font-weight:600;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .drag-hint span { background:white; border-radius:20px; padding:4px 14px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+
+  /* ── Tasks grid ── */
+  .tasks-grid {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:14px; margin-bottom:22px;
+  }
+  @media(max-width:520px){
+    .tasks-grid{grid-template-columns:1fr}
+    .title-box h1{font-size:2rem}
+  }
+
+  /* ── Task card ── */
+  .task-card {
+    background:var(--card-bg); border-radius:22px; padding:14px 14px 14px 10px;
+    box-shadow:var(--shadow); display:flex; align-items:center; gap:10px;
+    border:3px solid transparent; position:relative; overflow:hidden;
+    user-select:none; transition:transform .2s, box-shadow .2s, opacity .2s;
+    cursor:grab;
+  }
+  .task-card:active{cursor:grabbing}
+  .task-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.16)}
+
+  /* colour accent left border */
+  .task-card[data-color="yellow"]{border-left:6px solid #FFE066}
+  .task-card[data-color="blue"]  {border-left:6px solid #74C0FC}
+  .task-card[data-color="pink"]  {border-left:6px solid #FF9DC1}
+  .task-card[data-color="orange"]{border-left:6px solid #FFB347}
+  .task-card[data-color="purple"]{border-left:6px solid #C5A3FF}
+  .task-card[data-color="mint"]  {border-left:6px solid #63E6BE}
+  .task-card[data-color="red"]   {border-left:6px solid #FF6B6B}
+  .task-card[data-color="teal"]  {border-left:6px solid #20c997}
+
+  .task-card.done{background:linear-gradient(135deg,#f0fff8,#e8fff5)!important;border-color:#63E6BE!important}
+  .task-card.done .task-name{color:#2fa87a;text-decoration:line-through;text-decoration-color:#63E6BE}
+  .task-card.done .task-time{background:rgba(99,230,190,.2)!important;color:#2fa87a}
+
+  /* drag states */
+  .task-card.dragging  { opacity:.35; transform:scale(.96); cursor:grabbing; }
+  .task-card.drag-over {
+    border-color:#FF6CAB!important;
+    box-shadow:0 0 0 3px #FF6CAB, 0 12px 32px rgba(255,108,171,.35)!important;
+    transform:scale(1.03)!important;
+  }
+  .task-card.drag-over::before {
+    content:''; position:absolute; inset:0; border-radius:20px;
+    background:rgba(255,108,171,.07); pointer-events:none;
+  }
+
+  /* grip handle */
+  .grip {
+    display:flex; flex-direction:column; gap:3px;
+    padding:4px 4px 4px 2px; opacity:.3; flex-shrink:0; cursor:grab;
+    transition:opacity .2s;
+  }
+  .grip span { display:block; width:16px; height:2.5px; border-radius:2px; background:#666; }
+  .task-card:hover .grip { opacity:.6; }
+
+  .task-emoji { font-size:2.8rem; min-width:50px; text-align:center; filter:drop-shadow(0 2px 5px rgba(0,0,0,.15)); line-height:1; transition:transform .3s; pointer-events:none; }
+  .task-card:hover .task-emoji{transform:scale(1.15) rotate(-5deg)}
+  .task-card.done .task-emoji{animation:bounce .4s ease}
+  @keyframes bounce{0%{transform:scale(1)}40%{transform:scale(1.3) rotate(10deg)}70%{transform:scale(.9)}100%{transform:scale(1)}}
+
+  .task-info{flex:1;min-width:0;pointer-events:none}
+  .task-name{font-size:1rem;font-weight:800;color:#333;line-height:1.2;margin-bottom:2px}
+  .task-time{font-size:.74rem;color:#aaa;font-weight:600;background:#f3f3f3;border-radius:20px;padding:2px 8px;display:inline-block}
+
+  .card-right{display:flex;flex-direction:column;align-items:center;gap:7px;flex-shrink:0}
+
+  .timer-start-btn {
+    background:linear-gradient(135deg,#FFB347,#FFD166); border:none; border-radius:12px;
+    padding:4px 8px; cursor:pointer; font-size:.85rem; font-weight:800; color:white;
+    box-shadow:0 3px 10px rgba(255,179,71,.4); transition:all .2s; font-family:'Baloo 2',cursive;
+    white-space:nowrap; line-height:1.3;
+  }
+  .timer-start-btn:hover{transform:scale(1.1);box-shadow:0 5px 14px rgba(255,179,71,.5)}
+  .timer-start-btn.running{background:linear-gradient(135deg,#FF6B6B,#FF9DC1);animation:pulseBtn 1s ease-in-out infinite}
+  .timer-start-btn.paused{background:linear-gradient(135deg,#4facfe,#00f2fe);box-shadow:0 3px 10px rgba(79,172,254,.4)}
+  @keyframes pulseBtn{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+  .check-circle {
+    width:38px;height:38px;border-radius:50%;border:3.5px solid #ddd;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .3s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;
+    background:white;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;
+  }
+  .task-card.done .check-circle{background:linear-gradient(135deg,#63E6BE,#20c997);border-color:#63E6BE;box-shadow:0 4px 16px rgba(99,230,190,.5);transform:scale(1.1)}
+  .check-icon{font-size:1.2rem;opacity:0;transform:scale(0);transition:all .25s cubic-bezier(.34,1.56,.64,1)}
+  .task-card.done .check-icon{opacity:1;transform:scale(1)}
+
+  /* ── Reset ── */
+  .reset-btn{display:block;margin:0 auto 18px;background:white;border:3px solid #FF9DC1;border-radius:20px;padding:8px 22px;font-family:'Baloo 2',cursive;font-size:1rem;font-weight:700;color:#FF6CAB;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(255,108,171,.2)}
+  .reset-btn:hover{background:#FF6CAB;color:white;transform:translateY(-2px);box-shadow:0 6px 16px rgba(255,108,171,.35)}
+  .grass-footer{text-align:center;font-size:2.2rem;letter-spacing:2px;margin-top:6px;filter:drop-shadow(0 -4px 8px rgba(0,0,0,.08))}
+
+  /* ── Touch drag ghost ── */
+  #touchGhost {
+    position:fixed; z-index:9998; pointer-events:none; border-radius:22px;
+    box-shadow:0 16px 48px rgba(0,0,0,.35); opacity:.92;
+    transform:scale(1.06) rotate(2deg);
+    transition:none;
+  }
+
+  /* ── TIMER MODAL ── */
+  .timer-modal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(10,20,60,.74);backdrop-filter:blur(8px);align-items:center;justify-content:center;animation:fadeInM .3s ease}
+  .timer-modal.show{display:flex}
+  @keyframes fadeInM{from{opacity:0}to{opacity:1}}
+  .timer-box{background:linear-gradient(160deg,#1a1a3e,#2d1b69,#1a3a5c);border-radius:36px;padding:30px 26px 26px;box-shadow:0 24px 64px rgba(0,0,0,.5),0 0 0 2px rgba(255,255,255,.1);text-align:center;position:relative;max-width:330px;width:90%;animation:slideUpBox .4s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes slideUpBox{from{transform:translateY(60px) scale(.8);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+  .timer-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.12);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:.9rem;color:white;display:flex;align-items:center;justify-content:center;transition:background .2s}
+  .timer-close:hover{background:rgba(255,80,80,.4)}
+  .timer-task-emoji{font-size:3.2rem;margin-bottom:4px;display:block;animation:floatE 2s ease-in-out infinite}
+  @keyframes floatE{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  .timer-task-label{font-size:1.3rem;font-weight:900;color:white;margin-bottom:18px;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+
+  /* Hourglass */
+  .hourglass-wrap{position:relative;width:120px;height:200px;margin:0 auto 18px}
+  .hourglass-wrap svg{width:100%;height:100%;filter:drop-shadow(0 8px 20px rgba(0,0,0,.4))}
+
+  .countdown-display{font-size:2.8rem;font-weight:900;color:white;letter-spacing:4px;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(99,230,190,.6),0 2px 8px rgba(0,0,0,.4);margin-bottom:6px;font-family:'Baloo 2',cursive}
+  .countdown-display.warning{color:#FF6B6B;text-shadow:0 0 20px rgba(255,107,107,.6);animation:warnPulse .5s ease-in-out infinite}
+  @keyframes warnPulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .timer-label{font-size:.8rem;color:rgba(255,255,255,.5);font-weight:600;margin-bottom:18px;letter-spacing:1px}
+
+  .timer-btns{display:flex;gap:10px;justify-content:center}
+  .tbtn{border:none;border-radius:18px;padding:9px 18px;font-family:'Baloo 2',cursive;font-size:.95rem;font-weight:800;cursor:pointer;transition:all .2s}
+  .tbtn-pause{background:rgba(255,255,255,.15);color:white}
+  .tbtn-pause:hover{background:rgba(255,255,255,.25)}
+  .tbtn-stop{background:linear-gradient(135deg,#FF6B6B,#ff4444);color:white;box-shadow:0 4px 12px rgba(255,107,107,.4)}
+  .tbtn-done{background:linear-gradient(135deg,#63E6BE,#20c997);color:white;box-shadow:0 4px 12px rgba(99,230,190,.4)}
+  .tbtn-stop:hover,.tbtn-done:hover{transform:scale(1.05)}
+
+  .timer-done-msg{display:none}
+  .timer-done-msg.show{display:block;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+  .done-text{font-size:1.5rem;font-weight:900;color:#63E6BE;margin-bottom:6px}
+  .done-sub{color:rgba(255,255,255,.8);font-size:.95rem;margin-bottom:18px}
+  /* ── Toast notification ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(30,30,50,.92); color: white; font-family: 'Baloo 2', cursive;
+    font-size: .95rem; font-weight: 700; padding: 10px 22px; border-radius: 24px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.3); z-index: 9000;
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s, transform .3s;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+<div class="star-deco" style="top:12%;right:8%;animation-delay:.3s">⭐</div>
+<div class="star-deco" style="top:22%;right:18%;animation-delay:1.2s;font-size:1rem">✨</div>
+<div class="star-deco" style="top:6%;left:12%;animation-delay:.8s">🌟</div>
+<div class="star-deco" style="top:30%;left:5%;animation-delay:1.8s;font-size:1rem">💫</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- TIMER MODAL -->
+<div class="timer-modal" id="timerModal">
+  <div class="timer-box">
+    <button class="timer-close" onclick="closeTimerModal()">✕</button>
+    <span class="timer-task-emoji" id="modalEmoji">📚</span>
+    <div class="timer-task-label" id="modalLabel">Tarefa</div>
+    <div class="hourglass-wrap">
+      <svg viewBox="0 0 100 180" id="hourglassSvg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFE066"/>
+            <stop offset="100%" stop-color="#FFB347"/>
+          </linearGradient>
+          <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#c8973a"/>
+            <stop offset="100%" stop-color="#8B5e0a"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="1.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect x="6" y="2"   width="88" height="11" rx="5.5" fill="url(#frameGrad)"/>
+        <rect x="6" y="167" width="88" height="11" rx="5.5" fill="url(#frameGrad)"/>
+        <path d="M10,13 L90,13 L53,84 L47,84 Z" fill="rgba(255,255,255,0.06)" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M47,96 L53,96 L90,167 L10,167 Z" fill="rgba(255,255,255,0.06)" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="44" y="83" width="12" height="14" rx="3" fill="url(#frameGrad)"/>
+        <polygon id="topSand"    points="10,13 90,13 50,84"       fill="url(#sandGrad)" opacity=".92" filter="url(#glow)"/>
+        <polygon id="bottomSand" points="50,96 50,96 10,167 10,167" fill="url(#sandGrad)" opacity=".92" filter="url(#glow)"/>
+        <!-- Sand stream particles -->
+        <circle id="sp1" cx="50" cy="87" r="1.8" fill="#FFE066">
+          <animate attributeName="cy" values="86;93" dur="0.45s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="1;0" dur="0.45s" repeatCount="indefinite"/>
+        </circle>
+        <circle id="sp2" cx="50" cy="87" r="1.3" fill="#FFD166">
+          <animate attributeName="cy" values="86;93" dur="0.45s" begin="0.15s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".8;0" dur="0.45s" begin="0.15s" repeatCount="indefinite"/>
+        </circle>
+        <circle id="sp3" cx="50" cy="87" r=".9" fill="#FFB347">
+          <animate attributeName="cy" values="86;93" dur="0.45s" begin="0.3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".7;0" dur="0.45s" begin="0.3s" repeatCount="indefinite"/>
+        </circle>
+        <path d="M15,15 L32,15 L20,45 Z" fill="rgba(255,255,255,0.07)"/>
+        <path d="M14,165 L26,132 L19,165 Z" fill="rgba(255,255,255,0.05)"/>
+      </svg>
+    </div>
+    <div class="countdown-display" id="countdownDisplay">00:00</div>
+    <div class="timer-label" id="timerLabel">em andamento...</div>
+    <div class="timer-btns" id="timerBtns">
+      <button class="tbtn tbtn-pause" id="pauseBtn" onclick="pauseTimer()">⏸ Pausar</button>
+      <button class="tbtn tbtn-stop"  onclick="stopTimer()">⏹ Parar</button>
+    </div>
+    <div class="timer-done-msg" id="timerDoneMsg">
+      <div class="done-text">🎉 Tempo acabou!</div>
+      <div class="done-sub">Você arrasoooou! ⭐</div>
+      <div class="timer-btns">
+        <button class="tbtn tbtn-done" onclick="finishTimer()">✓ Marcar como feita!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="container">
+
+  <div class="header">
+    <span class="sun-icon">☀️</span>
+    <div class="title-box">
+      <h1>✨ Minhas Tarefas ✨</h1>
+      <div class="subtitle">Hoje eu consigo fazer tudo! 💪</div>
+    </div>
+    <div class="name-badge">Olá, <span>Supercriança!</span> 🦸</div>
+  </div>
+
+  <div class="days-row" id="daysRow">
+    <button class="day-btn" onclick="setDay(this)">☀️ Seg</button>
+    <button class="day-btn" onclick="setDay(this)">🌈 Ter</button>
+    <button class="day-btn" onclick="setDay(this)">🌸 Qua</button>
+    <button class="day-btn" onclick="setDay(this)">⭐ Qui</button>
+    <button class="day-btn" onclick="setDay(this)">🎉 Sex</button>
+    <button class="day-btn" onclick="setDay(this)">🎮 Sáb</button>
+    <button class="day-btn" onclick="setDay(this)">🌙 Dom</button>
+  </div>
+
+  <div class="celebration" id="celebration">
+    <div class="confetti-row">🎊 🎉 🥳 🎊 🎉</div>
+    <h2>Uhuuu! Parabéns! 🏆</h2>
+    <p>Você completou todas as tarefas!<br>Você é incrível! ⭐⭐⭐</p>
+    <div class="confetti-row" style="margin-top:8px">🌟 💫 ✨ 🌟 💫</div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-label">
+      Progresso: <span class="count" id="doneCount">0</span> de <span class="count" id="totalCount">8</span> tarefas! 🚀
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="stars-row" id="starsRow"></div>
+  </div>
+
+  <div class="drag-hint">
+    <span>✋ Segure e arraste para mudar a ordem</span>
+  </div>
+
+  <div class="tasks-grid" id="tasksGrid"></div>
+
+  <button class="reset-btn" onclick="resetAll()">🔄 Recomeçar o dia</button>
+  <div class="grass-footer">🌿🌻🌿🌼🌿🦋🌿🌸🌿</div>
+</div>
+
+<script>
+/* ═══════════════ SAFE STORAGE WRAPPER ═══════════════
+   Chrome on Android blocks localStorage on file:// with a SecurityError.
+   This wrapper silently falls back to an in-memory store so the app
+   always renders, and persists whenever the browser allows it.
+*/
+const store = (() => {
+  const mem = {};                          // in-memory fallback
+  let ok = false;
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); ok = true; }
+  catch(e) { ok = false; }
+
+  return {
+    get(k)    { try { return ok ? localStorage.getItem(k)    : (mem[k]??null); } catch{ return mem[k]??null; } },
+    set(k, v) { try { if(ok)  localStorage.setItem(k, v);   else mem[k]=v;   } catch{ mem[k]=v; } },
+    del(k)    { try { if(ok)  localStorage.removeItem(k);   else delete mem[k]; } catch{ delete mem[k]; } },
+    persistent: ok   // lets us show a warning if needed
+  };
+})();
+
+/* ═══════════════ TASK DATA ═══════════════ */
+const TASKS_DEFAULT = [
+  { id:1, name:'Almoçar',          emoji:'🍽️', color:'orange', duration:0,    timeLabel:'12h00'        },
+  { id:2, name:'Telas',            emoji:'📱', color:'purple', duration:3600, timeLabel:'1 horinha'    },
+  { id:3, name:'Arrumar o Quarto', emoji:'🛏️', color:'blue',   duration:900,  timeLabel:'15 minutos'   },
+  { id:4, name:'Jantar',           emoji:'🍜', color:'yellow', duration:0,    timeLabel:'19h00'        },
+  { id:5, name:'Tomar Banho',      emoji:'🛁', color:'teal',   duration:900,  timeLabel:'15 minutos'   },
+  { id:6, name:'Escovar os Dentes',emoji:'🦷', color:'pink',   duration:120,  timeLabel:'2 minutinhos' },
+  { id:7, name:'Dormir',           emoji:'🌙', color:'mint',   duration:0,    timeLabel:'20h – 21h'    },
+  { id:8, name:'Fazer Tarefas',    emoji:'📚', color:'red',    duration:1800, timeLabel:'30 minutos'   },
+];
+
+/* ═══════════════ PERSISTENCE ═══════════════ */
+const LS_ORDER = 'tarefas_order';
+const LS_DONE  = 'tarefas_done';
+const LS_DATE  = 'tarefas_date';
+const LS_TIMER = 'tarefas_timer';
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function loadOrder() {
+  try {
+    const raw = store.get(LS_ORDER);
+    const saved = raw ? JSON.parse(raw) : null;
+    if (!saved || !Array.isArray(saved)) return [...TASKS_DEFAULT];
+    const map = Object.fromEntries(TASKS_DEFAULT.map(t => [t.id, t]));
+    const ordered = saved.map(id => map[id]).filter(Boolean);
+    TASKS_DEFAULT.forEach(t => { if (!saved.includes(t.id)) ordered.push(t); });
+    return ordered;
+  } catch { return [...TASKS_DEFAULT]; }
+}
+
+function saveOrder() {
+  try {
+    const ids = [...grid.querySelectorAll('.task-card')].map(c => parseInt(c.dataset.id));
+    store.set(LS_ORDER, JSON.stringify(ids));
+  } catch {}
+}
+
+function loadDone() {
+  try {
+    const date = store.get(LS_DATE);
+    if (date !== todayStr()) return new Set();
+    const raw = store.get(LS_DONE);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+
+function saveDone() {
+  try {
+    const ids = [...document.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
+    store.set(LS_DONE, JSON.stringify(ids));
+    store.set(LS_DATE, todayStr());
+  } catch {}
+}
+
+// Initialise from storage
+const TASKS     = loadOrder();
+const doneSaved = loadDone();
+
+/* ═══════════════ RENDER ═══════════════ */
+const grid = document.getElementById('tasksGrid');
+
+function renderTasks() {
+  grid.innerHTML = '';
+  TASKS.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'task-card';
+    card.dataset.id    = t.id;
+    card.dataset.color = t.color;
+    card.draggable = true;
+
+    card.innerHTML = `
+      <div class="grip"><span></span><span></span><span></span></div>
+      <div class="task-emoji">${t.emoji}</div>
+      <div class="task-info">
+        <div class="task-name">${t.name}</div>
+        <div class="task-time">⏰ ${t.timeLabel}</div>
+      </div>
+      <div class="card-right">
+        ${t.duration ? `<button class="timer-start-btn" data-tid="${t.id}" onclick="openTimer(event,this)">⏱️ Iniciar</button>` : ''}
+        <div class="check-circle" onclick="toggleDone(event,this.closest('.task-card'))">
+          <span class="check-icon">✓</span>
+        </div>
+      </div>`;
+
+    // Desktop drag
+    card.addEventListener('dragstart',  onDragStart);
+    card.addEventListener('dragend',    onDragEnd);
+    card.addEventListener('dragover',   onDragOver);
+    card.addEventListener('dragleave',  onDragLeave);
+    card.addEventListener('drop',       onDrop);
+
+    // Touch drag
+    card.addEventListener('touchstart', onTouchStart, { passive:true });
+    card.addEventListener('touchmove',  onTouchMove,  { passive:false });
+    card.addEventListener('touchend',   onTouchEnd);
+
+    // Restore done state from localStorage
+    if (doneSaved.has(t.id)) card.classList.add('done');
+
+    grid.appendChild(card);
+  });
+
+  updateStars();
+  updateTimerButtons();
+}
+
+function updateStars() {
+  const sr = document.getElementById('starsRow');
+  sr.innerHTML = '';
+  for (let i = 0; i < TASKS.length; i++) {
+    const s = document.createElement('span');
+    s.className = 'star-item';
+    s.textContent = '⭐';
+    sr.appendChild(s);
+  }
+}
+
+/* ═══════════════ PROGRESS ═══════════════ */
+document.getElementById('totalCount').textContent = TASKS.length;
+
+const dayBtns = document.querySelectorAll('.day-btn');
+const todayIdx = new Date().getDay(); // 0=Sun
+const btnIdx = todayIdx === 0 ? 6 : todayIdx - 1;
+dayBtns[btnIdx]?.classList.add('active');
+
+function setDay(btn) {
+  dayBtns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleDone(e, card) {
+  e.stopPropagation();
+  card.classList.toggle('done');
+  saveDone();
+  updateProgress();
+}
+
+function updateProgress() {
+  const done = document.querySelectorAll('.task-card.done').length;
+  const total = TASKS.length;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+  const stars = document.querySelectorAll('.star-item');
+  const lit = Math.round(done / total * stars.length);
+  stars.forEach((s, i) => i < lit ? s.classList.add('lit') : s.classList.remove('lit'));
+  const cel = document.getElementById('celebration');
+  if (done === total) { cel.classList.add('show'); launchConfetti(); }
+  else cel.classList.remove('show');
+}
+
+function resetAll() {
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('done'));
+  saveDone();
+  updateProgress();
+  stopTimer();
+}
+
+/* ═══════════════ CONFETTI ═══════════════ */
+function launchConfetti() {
+  const emo = ['🎊','⭐','🌟','💫','🎉','🏆','❤️','🥳'];
+  for (let i = 0; i < 22; i++) {
+    const el = document.createElement('div');
+    el.textContent = emo[Math.floor(Math.random()*emo.length)];
+    el.style.cssText = `position:fixed;font-size:${1+Math.random()*1.5}rem;left:${Math.random()*100}vw;top:-40px;z-index:9999;animation:fall ${1.5+Math.random()*2}s ease-in forwards;animation-delay:${Math.random()}s;pointer-events:none`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4500);
+  }
+}
+const ds = document.createElement('style');
+ds.textContent = `@keyframes fall{from{transform:translateY(0) rotate(0)}to{transform:translateY(100vh) rotate(720deg);opacity:0}}`;
+document.head.appendChild(ds);
+
+/* ═══════════════ DESKTOP DRAG & DROP ═══════════════ */
+let dragSrc = null;
+
+function onDragStart(e) {
+  dragSrc = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+}
+function onDragEnd() {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+  dragSrc = null;
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (this !== dragSrc) {
+    document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+    this.classList.add('drag-over');
+  }
+}
+function onDragLeave() {
+  this.classList.remove('drag-over');
+}
+function onDrop(e) {
+  e.stopPropagation();
+  if (dragSrc && dragSrc !== this) {
+    swapCards(dragSrc, this);
+  }
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+}
+
+/* ═══════════════ TOUCH DRAG ═══════════════ */
+let touchSrc       = null;
+let touchGhost     = null;
+let touchOffX      = 0;
+let touchOffY      = 0;
+let longPressTimer = null;
+let touchMoved     = false;
+let startX = 0, startY = 0;
+
+function onTouchStart(e) {
+  const card = this;
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+  touchMoved = false;
+
+  longPressTimer = setTimeout(() => {
+    if (touchMoved) return;
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(40);
+    touchSrc = card;
+
+    const rect = card.getBoundingClientRect();
+    touchOffX = e.touches[0].clientX - rect.left;
+    touchOffY = e.touches[0].clientY - rect.top;
+
+    // Create ghost clone
+    touchGhost = card.cloneNode(true);
+    touchGhost.id = 'touchGhost';
+    touchGhost.style.cssText = `
+      position:fixed; z-index:9998; pointer-events:none;
+      width:${rect.width}px; left:${rect.left}px; top:${rect.top}px;
+      border-radius:22px; box-shadow:0 16px 48px rgba(0,0,0,.4);
+      opacity:.92; transform:scale(1.06) rotate(2deg);
+    `;
+    document.body.appendChild(touchGhost);
+    card.classList.add('dragging');
+  }, 280);
+}
+
+function onTouchMove(e) {
+  const dx = Math.abs(e.touches[0].clientX - startX);
+  const dy = Math.abs(e.touches[0].clientY - startY);
+  if (dx > 8 || dy > 8) { touchMoved = true; clearTimeout(longPressTimer); }
+  if (!touchGhost) return;
+
+  e.preventDefault();
+  const tx = e.touches[0].clientX;
+  const ty = e.touches[0].clientY;
+
+  touchGhost.style.left = (tx - touchOffX) + 'px';
+  touchGhost.style.top  = (ty - touchOffY) + 'px';
+
+  // Find card under finger
+  touchGhost.style.visibility = 'hidden';
+  const el = document.elementFromPoint(tx, ty);
+  touchGhost.style.visibility = 'visible';
+
+  const target = el?.closest('.task-card');
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+  if (target && target !== touchSrc) target.classList.add('drag-over');
+}
+
+function onTouchEnd(e) {
+  clearTimeout(longPressTimer);
+  if (!touchGhost || !touchSrc) { cleanup(); return; }
+
+  const touch = e.changedTouches[0];
+  touchGhost.style.visibility = 'hidden';
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const target = el?.closest('.task-card');
+
+  if (target && target !== touchSrc) {
+    swapCards(touchSrc, target);
+  }
+  cleanup();
+}
+
+function cleanup() {
+  if (touchGhost) { touchGhost.remove(); touchGhost = null; }
+  if (touchSrc)   { touchSrc.classList.remove('dragging'); touchSrc = null; }
+  document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
+}
+
+/* ═══════════════ SWAP / REORDER ═══════════════ */
+function swapCards(src, dst) {
+  const cards = [...grid.querySelectorAll('.task-card')];
+  const si = cards.indexOf(src);
+  const di = cards.indexOf(dst);
+
+  // Determine insertion point
+  if (si < di) {
+    grid.insertBefore(src, dst.nextSibling);
+  } else {
+    grid.insertBefore(src, dst);
+  }
+
+  // Animate the moved card
+  src.style.animation = 'none';
+  src.offsetHeight; // reflow
+  src.style.animation = 'cardLand .3s cubic-bezier(.34,1.56,.64,1)';
+
+  // Persist new order
+  saveOrder();
+  showToast('💾 Ordem salva!');
+}
+
+const animStyle = document.createElement('style');
+animStyle.textContent = `@keyframes cardLand{from{transform:scale(1.08)}to{transform:scale(1)}}`;
+document.head.appendChild(animStyle);
+
+/* ═══════════════ TIMER ═══════════════ */
+let timerInterval  = null;
+let timerRemaining = 0;
+let timerTotal     = 0;
+let timerPaused    = false;
+let activeCard     = null;
+let activeTimerBtn = null;
+let activeTaskId   = null;   // track by id so restore can find card/btn
+let audioCtx       = null;
+
+/* ── Audio ── */
+function getACtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+document.addEventListener('pointerdown', function warmUp() {
+  const c = getACtx(); if (c.state === 'suspended') c.resume();
+  document.removeEventListener('pointerdown', warmUp);
+}, true);
+
+function playTick() {
+  const c = getACtx();
+  const play = () => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = 1100;
+    g.gain.setValueAtTime(.15, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .08);
+    o.connect(g); g.connect(c.destination);
+    o.start(); o.stop(c.currentTime + .09);
+  };
+  c.state === 'suspended' ? c.resume().then(play) : play();
+}
+function playDoneSound() {
+  const c = getACtx();
+  const play = () => {
+    [523, 659, 784, 1047].forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      const t = c.currentTime + i * .2;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(.35, t + .05);
+      g.gain.exponentialRampToValueAtTime(.001, t + 1.0);
+      o.connect(g); g.connect(c.destination);
+      o.start(t); o.stop(t + 1.0);
+    });
+    const o2 = c.createOscillator(), g2 = c.createGain();
+    o2.type = 'sine'; o2.frequency.value = 1568;
+    const t2 = c.currentTime + .75;
+    g2.gain.setValueAtTime(0, t2); g2.gain.linearRampToValueAtTime(.2, t2+.05);
+    g2.gain.exponentialRampToValueAtTime(.001, t2+1.2);
+    o2.connect(g2); g2.connect(c.destination);
+    o2.start(t2); o2.stop(t2+1.2);
+  };
+  c.state === 'suspended' ? c.resume().then(play) : play();
+}
+
+/* ── Timer localStorage ── */
+// LS_TIMER is already declared globally
+
+function saveTimerState() {
+  if (activeTaskId === null) { store.del(LS_TIMER); return; }
+  store.set(LS_TIMER, JSON.stringify({
+    taskId:    activeTaskId,
+    remaining: timerRemaining,
+    total:     timerTotal,
+    paused:    timerPaused,
+    savedAt:   Date.now()          // wall-clock so we can compute elapsed
+  }));
+}
+function clearTimerState() { store.del(LS_TIMER); }
+
+/* ── Core countdown loop (shared by openTimer & restoreTimerState) ── */
+function startCountdown() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerInterval = setInterval(() => {
+    if (timerPaused) { saveTimerState(); return; }
+    timerRemaining--;
+    updateHourglass(timerRemaining / timerTotal);
+    updateCountdown(timerRemaining);
+    saveTimerState();                               // persist every second
+    if (timerRemaining <= 10 && timerRemaining > 0) {
+      document.getElementById('countdownDisplay').classList.add('warning');
+      playTick();
+    }
+    if (timerRemaining <= 0) {
+      clearInterval(timerInterval); timerInterval = null;
+      clearTimerState();
+      setSandVisible(false);
+      timerDone();
+    }
+  }, 1000);
+}
+
+/* ── Open timer from button click ── */
+function openTimer(e, btn) {
+  e.stopPropagation();
+  const c = getACtx(); if (c.state === 'suspended') c.resume();
+
+  const card = btn.closest('.task-card');
+  const tid  = parseInt(btn.dataset.tid);
+  const task = TASKS.find(t => t.id === tid);
+  if (!task || !task.duration) return;
+
+  // If this task has an active timer and is already selected, resume it
+  if (activeTaskId === task.id && timerRemaining > 0) {
+    renderTimerModal(task, timerPaused);
+    if (!timerPaused) startCountdown();
+    updateTimerButtons();
+    return;
+  }
+
+  // If another timer is running, stop it first
+  if (activeTaskId !== null && activeTaskId !== task.id) {
+    stopTimer(false);
+  }
+
+  activeCard    = card;
+  activeTimerBtn = btn;
+  activeTaskId  = task.id;
+  timerTotal    = task.duration;
+  timerRemaining = task.duration;
+  timerPaused   = false;
+
+  renderTimerModal(task, false);
+  saveTimerState();
+  startCountdown();
+  updateTimerButtons();
+}
+
+/* ── Restore timer on page load ── */
+function restoreTimerState() {
+  try {
+    const raw = store.get(LS_TIMER);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    const task  = TASKS.find(t => t.id === saved.taskId);
+    if (!task) { clearTimerState(); return; }
+
+    // Calculate how much time passed while the page was closed
+    let remaining = saved.remaining;
+    const elapsed = Math.floor((Date.now() - saved.savedAt) / 1000);
+
+    if (!saved.paused && elapsed > 0) remaining -= elapsed;
+
+    if (remaining <= 0) {
+      // Timer finished while away — mark task done and notify
+      clearTimerState();
+      const card = document.querySelector(`.task-card[data-id="${task.id}"]`);
+      if (card && !card.classList.contains('done')) {
+        card.classList.add('done');
+        saveDone(); updateProgress();
+      }
+      showToast(`⏰ ${task.name} terminou enquanto você estava fora!`);
+      return;
+    }
+
+    // Restore state
+    activeTaskId   = task.id;
+    timerTotal     = saved.total;
+    timerRemaining = remaining;
+    timerPaused    = saved.paused;
+
+    // Reconnect card reference
+    activeCard     = document.querySelector(`.task-card[data-id="${task.id}"]`);
+
+    renderTimerModal(task, saved.paused);
+    if (!saved.paused) startCountdown();
+    updateTimerButtons();
+
+    const elapsedMin = Math.floor(elapsed / 60);
+    const elapsedSec = elapsed % 60;
+    const elapsedStr = elapsed < 60 ? `${elapsed}s` : `${elapsedMin}min ${elapsedSec}s`;
+    showToast(`⏱️ Timer restaurado! (${elapsedStr} decorrido${saved.paused ? ' — pausado' : ''})`);
+
+  } catch { clearTimerState(); }
+}
+
+/* ── Shared modal renderer ── */
+function renderTimerModal(task, paused) {
+  document.getElementById('modalEmoji').textContent = task.emoji;
+  document.getElementById('modalLabel').textContent = task.name;
+  document.getElementById('timerBtns').style.display = 'flex';
+  document.getElementById('timerDoneMsg').classList.remove('show');
+  document.getElementById('pauseBtn').textContent = paused ? '▶ Continuar' : '⏸ Pausar';
+  document.getElementById('countdownDisplay').classList.remove('warning');
+  document.getElementById('timerLabel').textContent = paused ? '⏸ pausado' : 'em andamento...';
+  updateHourglass(timerRemaining / timerTotal);
+  updateCountdown(timerRemaining);
+  document.getElementById('timerModal').classList.add('show');
+  setSandVisible(!paused);
+}
+
+/* ── Pause / Stop / Done ── */
+function pauseTimer() {
+  timerPaused = !timerPaused;
+  document.getElementById('pauseBtn').textContent = timerPaused ? '▶ Continuar' : '⏸ Pausar';
+  document.getElementById('timerLabel').textContent = timerPaused ? '⏸ pausado' : 'em andamento...';
+  setSandVisible(!timerPaused);
+  saveTimerState();
+  updateTimerButtons();
+}
+
+function stopTimer(close = true) {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerPaused = false; activeCard = null; activeTaskId = null;
+  setSandVisible(false);
+  clearTimerState();
+  updateTimerButtons();
+  if (close) document.getElementById('timerModal').classList.remove('show');
+}
+
+function timerDone() {
+  playDoneSound(); updateHourglass(0);
+  document.getElementById('timerBtns').style.display = 'none';
+  document.getElementById('timerDoneMsg').classList.add('show');
+  document.getElementById('timerLabel').textContent = '🎊 concluído!';
+  document.getElementById('countdownDisplay').textContent = '00:00';
+  
+  // Show toast if the modal was closed/hidden
+  const modal = document.getElementById('timerModal');
+  if (!modal.classList.contains('show')) {
+    const task = TASKS.find(t => t.id === activeTaskId);
+    if (task) {
+      showToast(`🎉 ${task.name} concluído!`);
+    }
+  }
+
+  activeTaskId = null;
+  updateTimerButtons();
+}
+
+function finishTimer() {
+  if (activeCard) { activeCard.classList.add('done'); saveDone(); updateProgress(); }
+  activeTaskId = null;
+  stopTimer(true);
+}
+
+function closeTimerModal() {
+  document.getElementById('timerModal').classList.remove('show');
+}
+
+function updateTimerButtons() {
+  document.querySelectorAll('.timer-start-btn').forEach(btn => {
+    btn.textContent = '⏱️ Iniciar';
+    btn.className = 'timer-start-btn';
+  });
+  if (activeTaskId !== null) {
+    const activeBtn = document.querySelector(`.timer-start-btn[data-tid="${activeTaskId}"]`);
+    if (activeBtn) {
+      if (timerPaused) {
+        activeBtn.textContent = '⏱️ Retomar';
+        activeBtn.classList.add('paused');
+      } else {
+        activeBtn.textContent = '⏱️ Rodando';
+        activeBtn.classList.add('running');
+      }
+    }
+  }
+}
+
+/* ── Save state on page hide / close ── */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveTimerState();
+});
+window.addEventListener('beforeunload', saveTimerState);
+
+/* Hourglass SVG */
+function updateHourglass(p) {
+  p = Math.max(0, Math.min(1, p));
+  // top chamber: apex y=84, top y=13, halfW=40
+  const tY  = 13 + (1-p)*71, tX = 40*p;
+  document.getElementById('topSand').setAttribute('points',
+    `${50-tX},${tY} ${50+tX},${tY} 50,84`);
+  // bottom chamber: apex y=96, base y=167, halfW=40
+  const filled = 1-p;
+  const bY = 167 - filled*71, bX = 40*filled;
+  document.getElementById('bottomSand').setAttribute('points',
+    `${50-bX},${bY} ${50+bX},${bY} 90,167 10,167`);
+}
+function updateCountdown(s) {
+  const m = Math.floor(s/60).toString().padStart(2,'0');
+  const r = (s%60).toString().padStart(2,'0');
+  document.getElementById('countdownDisplay').textContent = `${m}:${r}`;
+}
+function setSandVisible(v) {
+  ['sp1','sp2','sp3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.visibility = v ? 'visible' : 'hidden';
+  });
+}
+
+/* ═══════════════ TOAST ═══════════════ */
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ═══════════════ INIT ═══════════════ */
+renderTasks();
+updateProgress();       // restore stars/bar from saved done state
+updateHourglass(1);
+setSandVisible(false);
+updateCountdown(0);
+restoreTimerState();    // reopen timer if it was running when page closed
+</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Minhas Tarefas do Dia! 🌟</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+<div class="star-deco" style="top:12%;right:8%;animation-delay:.3s">⭐</div>
+<div class="star-deco" style="top:22%;right:18%;animation-delay:1.2s;font-size:1rem">✨</div>
+<div class="star-deco" style="top:6%;left:12%;animation-delay:.8s">🌟</div>
+<div class="star-deco" style="top:30%;left:5%;animation-delay:1.8s;font-size:1rem">💫</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- TIMER MODAL -->
+<div class="timer-modal" id="timerModal">
+  <div class="timer-box">
+    <button class="timer-close" onclick="closeTimerModal()">✕</button>
+    <span class="timer-task-emoji" id="modalEmoji">📚</span>
+    <div class="timer-task-label" id="modalLabel">Tarefa</div>
+    <div class="hourglass-wrap">
+      <svg viewBox="0 0 100 180" id="hourglassSvg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFE066"/>
+            <stop offset="100%" stop-color="#FFB347"/>
+          </linearGradient>
+          <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#c8973a"/>
+            <stop offset="100%" stop-color="#8B5e0a"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="1.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <rect x="6" y="2"   width="88" height="11" rx="5.5" fill="url(#frameGrad)"/>
+        <rect x="6" y="167" width="88" height="11" rx="5.5" fill="url(#frameGrad)"/>
+        <path d="M10,13 L90,13 L53,84 L47,84 Z" fill="rgba(255,255,255,0.06)" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M47,96 L53,96 L90,167 L10,167 Z" fill="rgba(255,255,255,0.06)" stroke="url(#frameGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="44" y="83" width="12" height="14" rx="3" fill="url(#frameGrad)"/>
+        <polygon id="topSand"    points="10,13 90,13 50,84"       fill="url(#sandGrad)" opacity=".92" filter="url(#glow)"/>
+        <polygon id="bottomSand" points="50,96 50,96 10,167 10,167" fill="url(#sandGrad)" opacity=".92" filter="url(#glow)"/>
+        <!-- Sand stream particles -->
+        <circle id="sp1" cx="50" cy="87" r="1.8" fill="#FFE066">
+          <animate attributeName="cy" values="86;93" dur="0.45s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="1;0" dur="0.45s" repeatCount="indefinite"/>
+        </circle>
+        <circle id="sp2" cx="50" cy="87" r="1.3" fill="#FFD166">
+          <animate attributeName="cy" values="86;93" dur="0.45s" begin="0.15s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".8;0" dur="0.45s" begin="0.15s" repeatCount="indefinite"/>
+        </circle>
+        <circle id="sp3" cx="50" cy="87" r=".9" fill="#FFB347">
+          <animate attributeName="cy" values="86;93" dur="0.45s" begin="0.3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values=".7;0" dur="0.45s" begin="0.3s" repeatCount="indefinite"/>
+        </circle>
+        <path d="M15,15 L32,15 L20,45 Z" fill="rgba(255,255,255,0.07)"/>
+        <path d="M14,165 L26,132 L19,165 Z" fill="rgba(255,255,255,0.05)"/>
+      </svg>
+    </div>
+    <div class="countdown-display" id="countdownDisplay">00:00</div>
+    <div class="timer-label" id="timerLabel">em andamento...</div>
+    <div class="timer-btns" id="timerBtns">
+      <button class="tbtn tbtn-pause" id="pauseBtn" onclick="pauseTimer()">⏸ Pausar</button>
+      <button class="tbtn tbtn-stop"  onclick="stopTimer()">⏹ Parar</button>
+    </div>
+    <div class="timer-done-msg" id="timerDoneMsg">
+      <div class="done-text">🎉 Tempo acabou!</div>
+      <div class="done-sub">Você arrasoooou! ⭐</div>
+      <div class="timer-btns">
+        <button class="tbtn tbtn-done" onclick="finishTimer()">✓ Marcar como feita!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="timer-modal" id="settingsModal">
+  <div class="settings-box">
+    <button class="timer-close" onclick="closeSettingsModal()">✕</button>
+    <h2 class="settings-title">Configurações ⚙️</h2>
+    
+    <!-- Child Name Section -->
+    <div class="settings-section">
+      <label class="settings-label">Nome do Supercriança:</label>
+      <input type="text" id="kidNameInput" placeholder="Ex: Pedrinho, Sofia..." maxlength="18" class="settings-name-input">
+      <button class="settings-save-btn" onclick="saveKidName()">OK</button>
+    </div>
+    
+    <hr class="settings-divider">
+    
+    <!-- Tasks Management Section -->
+    <div class="settings-section">
+      <div class="tasks-header-row">
+        <label class="settings-label">Gerenciar Atividades:</label>
+        <button class="add-task-btn" onclick="showTaskForm()">➕ Nova Tarefa</button>
+      </div>
+      
+      <div class="settings-tasks-list" id="settingsTasksList">
+        <!-- Dynamically filled list of current tasks with Edit / Delete -->
+      </div>
+    </div>
+    
+    <!-- Add/Edit Dynamic Task Form (collapsed by default) -->
+    <div class="task-form-box" id="taskFormBox" style="display: none;">
+      <h3 class="form-title" id="formTitle">Nova Tarefa ✏️</h3>
+      <input type="hidden" id="formTaskId">
+      
+      <div class="form-group">
+        <label>Nome da Atividade:</label>
+        <input type="text" id="formTaskName" placeholder="Ex: Arrumar brinquedos" maxlength="24">
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Emoji:</label>
+          <input type="text" id="formTaskEmoji" placeholder="🧸" maxlength="4" style="text-align: center; font-size: 1.4rem;">
+        </div>
+        <div class="form-group">
+          <label>Tempo (Minutos):</label>
+          <input type="number" id="formTaskDuration" value="0" min="0" max="180">
+          <small class="form-hint">Use 0 se não precisar de timer</small>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Cor de Destaque:</label>
+        <div class="color-options-row" id="formColorOptions">
+          <button class="color-dot active" data-color="yellow" style="background: #FFE066;"></button>
+          <button class="color-dot" data-color="blue" style="background: #74C0FC;"></button>
+          <button class="color-dot" data-color="pink" style="background: #FF9DC1;"></button>
+          <button class="color-dot" data-color="orange" style="background: #FFB347;"></button>
+          <button class="color-dot" data-color="purple" style="background: #C5A3FF;"></button>
+          <button class="color-dot" data-color="mint" style="background: #63E6BE;"></button>
+          <button class="color-dot" data-color="red" style="background: #FF6B6B;"></button>
+          <button class="color-dot" data-color="teal" style="background: #20c997;"></button>
+        </div>
+      </div>
+      
+      <div class="form-btns-row">
+        <button class="form-btn form-btn-cancel" onclick="hideTaskForm()">Cancelar</button>
+        <button class="form-btn form-btn-save" onclick="saveTaskDetails()">Salvar</button>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="container">
+
+  <div class="header">
+    <span class="sun-icon">☀️</span>
+    <div class="title-box">
+      <h1>✨ Minhas Tarefas ✨</h1>
+      <div class="subtitle">Hoje eu consigo fazer tudo! 💪</div>
+    </div>
+    <div class="name-badge">Olá, <span id="childNameSpan">Supercriança!</span> 🦸 <button class="settings-trigger-btn" onclick="openSettingsModal()">⚙️</button></div>
+  </div>
+
+  <div class="days-row" id="daysRow">
+    <button class="day-btn" onclick="setDay(this)">☀️ Seg</button>
+    <button class="day-btn" onclick="setDay(this)">🌈 Ter</button>
+    <button class="day-btn" onclick="setDay(this)">🌸 Qua</button>
+    <button class="day-btn" onclick="setDay(this)">⭐ Qui</button>
+    <button class="day-btn" onclick="setDay(this)">🎉 Sex</button>
+    <button class="day-btn" onclick="setDay(this)">🎮 Sáb</button>
+    <button class="day-btn" onclick="setDay(this)">🌙 Dom</button>
+  </div>
+
+  <div class="celebration" id="celebration">
+    <div class="confetti-row">🎊 🎉 🥳 🎊 🎉</div>
+    <h2>Uhuuu! Parabéns! 🏆</h2>
+    <p>Você completou todas as tarefas!<br>Você é incrível! ⭐⭐⭐</p>
+    <div class="confetti-row" style="margin-top:8px">🌟 💫 ✨ 🌟 💫</div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-label">
+      Progresso: <span class="count" id="doneCount">0</span> de <span class="count" id="totalCount">8</span> tarefas! 🚀
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="stars-row" id="starsRow"></div>
+  </div>
+
+  <div class="drag-hint">
+    <span>✋ Segure e arraste para mudar a ordem</span>
+  </div>
+
+  <div class="tasks-grid" id="tasksGrid"></div>
+
+  <button class="reset-btn" onclick="resetAll()">🔄 Recomeçar o dia</button>
+  <div class="grass-footer">🌿🌻🌿🌼🌿🦋🌿🌸🌿</div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
