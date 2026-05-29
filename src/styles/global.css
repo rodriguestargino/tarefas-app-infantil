@@ -1,0 +1,98 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Baloo 2', cursive;
+  background: linear-gradient(180deg, #b8e4ff 0%, #d4f1c4 100%);
+  min-height: 100vh;
+  padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  position: relative;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Clouds ── */
+.cloud { position:fixed; background:white; border-radius:50px; opacity:.85; z-index:0; animation:floatCloud linear infinite; }
+.cloud::before,.cloud::after { content:''; position:absolute; background:white; border-radius:50%; }
+.cloud.c1 { width:120px;height:40px;top:8%;left:-140px;animation-duration:35s; }
+.cloud.c1::before{width:60px;height:60px;top:-30px;left:15px}.cloud.c1::after{width:40px;height:40px;top:-20px;left:55px}
+.cloud.c2 { width:90px;height:30px;top:18%;left:-110px;animation-duration:45s;animation-delay:-15s; }
+.cloud.c2::before{width:45px;height:45px;top:-22px;left:10px}.cloud.c2::after{width:35px;height:35px;top:-15px;left:40px}
+.cloud.c3 { width:150px;height:50px;top:5%;left:-170px;animation-duration:55s;animation-delay:-28s; }
+.cloud.c3::before{width:70px;height:70px;top:-35px;left:20px}.cloud.c3::after{width:50px;height:50px;top:-25px;left:70px}
+
+.star-deco{position:fixed;font-size:1.5rem;animation:twinkle 2s ease-in-out infinite;z-index:0;pointer-events:none}
+
+/* ── Layout ── */
+.container { max-width:780px; margin:0 auto; position:relative; z-index:1; }
+
+/* ── Header ── */
+.header { text-align:center; margin-bottom:24px; }
+.sun-icon { font-size:5rem; display:block; animation:spinSun 20s linear infinite; filter:drop-shadow(0 4px 12px rgba(255,200,0,.5)); line-height:1; margin-bottom:8px; }
+.title-box { background:linear-gradient(135deg,#FF6CAB,#FF9DC1,#FFD166); border-radius:30px; padding:16px 30px; display:inline-block; box-shadow:0 8px 24px rgba(255,108,171,.35),0 0 0 5px white; }
+.title-box h1 { font-size:2.4rem; font-weight:900; color:white; text-shadow:3px 3px 0 rgba(0,0,0,.15); letter-spacing:1px; line-height:1.1; }
+.title-box .subtitle { font-size:1rem; color:rgba(255,255,255,.95); font-weight:600; margin-top:4px; }
+.name-badge { background:white; border-radius:20px; padding:8px 22px; display:inline-block; margin-top:12px; box-shadow:var(--shadow); font-size:1.1rem; color:#555; font-weight:700; }
+.name-badge span { color:#FF6CAB; font-size:1.2rem; }
+
+/* ── Days ── */
+.days-row { display:flex; gap:7px; justify-content:center; margin-bottom:22px; flex-wrap:wrap; }
+.day-btn { background:white; border:3px solid transparent; border-radius:16px; padding:7px 13px; cursor:pointer; font-family:'Baloo 2',cursive; font-weight:800; font-size:.9rem; color:#888; transition:all .2s; box-shadow:0 3px 10px rgba(0,0,0,.1); }
+.day-btn:hover{transform:translateY(-2px)}
+.day-btn.active { background:linear-gradient(135deg,#FF6CAB,#FFD166); color:white; border-color:white; transform:scale(1.08); box-shadow:0 6px 18px rgba(255,108,171,.4); }
+
+/* ── Celebration ── */
+.celebration { display:none; text-align:center; padding:22px; background:linear-gradient(135deg,#FFD166,#FF6CAB,#C5A3FF); border-radius:24px; margin-bottom:22px; box-shadow:0 8px 28px rgba(255,108,171,.35); animation:popIn .5s cubic-bezier(.34,1.56,.64,1); }
+.celebration.show{display:block}
+.celebration h2{font-size:2rem;color:white;font-weight:900;text-shadow:2px 2px 0 rgba(0,0,0,.15);margin-bottom:6px}
+.celebration p{color:rgba(255,255,255,.92);font-size:1rem;font-weight:600}
+.confetti-row{font-size:1.8rem;letter-spacing:4px}
+
+/* ── Drag hint ── */
+.drag-hint {
+  text-align:center; margin-bottom:14px;
+  font-size:.85rem; color:rgba(0,0,0,0.4); font-weight:600;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.drag-hint span { background:white; border-radius:20px; padding:4px 14px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+
+/* ── Tasks grid ── */
+.tasks-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:14px; margin-bottom:22px;
+}
+@media(max-width:520px){
+  .tasks-grid{grid-template-columns:1fr}
+  .title-box h1{font-size:2rem}
+}
+
+/* ── Reset ── */
+.reset-btn{display:block;margin:0 auto 18px;background:white;border:3px solid #FF9DC1;border-radius:20px;padding:8px 22px;font-family:'Baloo 2',cursive;font-size:1rem;font-weight:700;color:#FF6CAB;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(255,108,171,.2)}
+.reset-btn:hover{background:#FF6CAB;color:white;transform:translateY(-2px);box-shadow:0 6px 16px rgba(255,108,171,.35)}
+.grass-footer{text-align:center;font-size:2.2rem;letter-spacing:2px;margin-top:6px;filter:drop-shadow(0 -4px 8px rgba(0,0,0,.08))}
+
+/* ── Touch drag ghost ── */
+#touchGhost {
+  position:fixed; z-index:9998; pointer-events:none; border-radius:22px;
+  box-shadow:0 16px 48px rgba(0,0,0,.35); opacity:.92;
+  transform:scale(1.06) rotate(2deg);
+  transition:none;
+}
+
+/* ── Toast notification ── */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(30,30,50,.92); color: white; font-family: 'Baloo 2', cursive;
+  font-size: .95rem; font-weight: 700; padding: 10px 22px; border-radius: 24px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.3); z-index: 9000;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s, transform .3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
