@@ -222,12 +222,17 @@ function updateProgress() {
   const done = document.querySelectorAll('.task-card.done').length;
   const total = TASKS.length;
   document.getElementById('doneCount').textContent = done;
-  document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+  document.getElementById('totalCount').textContent = total; // Dynamically update total task count
+  
+  const pct = total > 0 ? (done / total * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  
   const stars = document.querySelectorAll('.star-item');
-  const lit = Math.round(done / total * stars.length);
+  const lit = total > 0 ? Math.round(done / total * stars.length) : 0;
   stars.forEach((s, i) => i < lit ? s.classList.add('lit') : s.classList.remove('lit'));
+  
   const cel = document.getElementById('celebration');
-  if (done === total) {
+  if (total > 0 && done === total) {
     cel.classList.add('show');
     launchConfetti();
     triggerHapticSuccess();

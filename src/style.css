@@ -71,8 +71,18 @@ body {
 .progress-track { background:#f0f0f0; border-radius:20px; height:20px; overflow:hidden; box-shadow:inset 0 2px 6px rgba(0,0,0,.08); }
 .progress-fill { height:100%; border-radius:20px; background:linear-gradient(90deg,#FF6CAB,#FFD166,#63E6BE); transition:width .6s cubic-bezier(.34,1.56,.64,1); background-size:200% 100%; animation:shimmer 2s linear infinite; }
 @keyframes shimmer{0%{background-position:200% center}100%{background-position:0% center}}
-.stars-row{display:flex;justify-content:center;gap:6px;margin-top:12px}
-.star-item{font-size:1.8rem;transition:all .3s cubic-bezier(.34,1.56,.64,1);filter:grayscale(1) opacity(.3)}
+.stars-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 12px;
+  flex-wrap: wrap; /* Permite quebrar linha caso existam muitas tarefas */
+}
+.star-item {
+  font-size: 1.4rem; /* Tamanho reduzido para melhor acomodação de várias tarefas */
+  transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+  filter: grayscale(1) opacity(.3);
+}
 .star-item.lit{filter:none;animation:starPop .4s cubic-bezier(.34,1.56,.64,1)}
 @keyframes starPop{0%{transform:scale(1)}50%{transform:scale(1.5) rotate(20deg)}100%{transform:scale(1)}}
 
