@@ -340,14 +340,7 @@ function handleTouchEnd(e) {
   }
 }
 
-window.resetAll = () => {
-  grid.querySelectorAll('.task-card').forEach(c => c.classList.remove('done'));
-  saveDone([]);
-  updateProgress(TASKS);
-  stopTimer(true);
-  triggerHapticImpact();
-  showToast('🔄 Recomeçado!');
-};
+
 
 // Exposed for external components (e.g. ParentDashboard) to refresh the child's task view
 window.refreshChildView = () => {

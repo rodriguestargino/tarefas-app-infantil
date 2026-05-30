@@ -51,6 +51,13 @@ export function closeSettingsModal() {
   }
 }
 
+window.returnToParentDashboard = () => {
+  closeSettingsModal();
+  if (window.openParentDashboard) {
+    window.openParentDashboard();
+  }
+};
+
 export function renderSettingsTasksList(tasks, onEditClick, onDeleteClick) {
   const listContainer = document.getElementById('settingsTasksList');
   if (!listContainer) return;
