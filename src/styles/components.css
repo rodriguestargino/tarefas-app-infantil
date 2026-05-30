@@ -63,7 +63,7 @@
 .task-name { font-size: 1rem; font-weight: 800; color: #333; line-height: 1.2; margin-bottom: 2px; }
 .task-time { font-size: 0.74rem; color: #aaa; font-weight: 600; background: #f3f3f3; border-radius: 20px; padding: 2px 8px; display: inline-block; }
 
-.card-right { display: flex; flex-direction: column; align-items: center; gap: 7px; flex-shrink: 0; }
+.card-right { display: flex; flex-direction: row; align-items: center; gap: 12px; flex-shrink: 0; }
 
 .timer-start-btn {
   background: linear-gradient(135deg, #FFB347, #FFD166); border: none; border-radius: 12px;
