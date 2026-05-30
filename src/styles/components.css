@@ -59,9 +59,9 @@
 .task-card:hover .task-emoji { transform: scale(1.15) rotate(-5deg); }
 .task-card.done .task-emoji { animation: bounce 0.4s ease; }
 
-.task-info { flex: 1; min-width: 0; pointer-events: none; }
-.task-name { font-size: 1rem; font-weight: 800; color: #333; line-height: 1.2; margin-bottom: 2px; }
-.task-time { font-size: 0.74rem; color: #aaa; font-weight: 600; background: #f3f3f3; border-radius: 20px; padding: 2px 8px; display: inline-block; }
+.task-info { flex: 1; min-width: 0; pointer-events: none; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; }
+.task-name { font-size: 1rem; font-weight: 800; color: #333; line-height: 1.2; margin-bottom: 2px; width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-wrap: break-word; }
+.task-time { font-size: 0.74rem; color: #aaa; font-weight: 600; background: #f3f3f3; border-radius: 20px; padding: 2px 8px; display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .card-right { display: flex; flex-direction: row; align-items: center; gap: 12px; flex-shrink: 0; }
 
@@ -190,3 +190,32 @@
 .form-btn-cancel { background: rgba(255, 255, 255, 0.12); color: white; flex: 1; }
 .form-btn-cancel:hover { background: rgba(255, 255, 255, 0.18); }
 .form-btn-save { background: linear-gradient(135deg, #63E6BE, #20c997); color: white; flex: 1.5; box-shadow: 0 3px 10px rgba(99,230,190,0.3); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 380px) {
+  .task-card {
+    padding: 12px 10px 12px 6px;
+    gap: 6px;
+  }
+  .grip {
+    padding: 12px 8px 12px 4px;
+  }
+  .task-emoji {
+    min-width: 40px;
+    font-size: 2.4rem;
+  }
+  .card-right {
+    gap: 8px;
+  }
+  .timer-start-btn {
+    padding: 4px 6px;
+    font-size: 0.75rem;
+  }
+  .check-circle {
+    width: 34px;
+    height: 34px;
+  }
+  .task-name {
+    font-size: 0.95rem;
+  }
+}
