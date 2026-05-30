@@ -1,4 +1,5 @@
 import { TASKS_DEFAULT } from '../data/defaultTasks.js';
+import { syncLocalToCloud } from './supabase.js';
 
 const LS_ORDER      = 'tarefas_order';
 const LS_DONE       = 'tarefas_done';
@@ -59,12 +60,14 @@ export function loadTasks() {
 export function saveTasks(list) {
   try {
     store.set(LS_TASKS_LIST, JSON.stringify(list));
+    syncLocalToCloud('tasks', list);
   } catch (e) {}
 }
 
 export function saveOrder(ids) {
   try {
     store.set(LS_ORDER, JSON.stringify(ids));
+    syncLocalToCloud('order', ids);
   } catch {}
 }
 
@@ -81,6 +84,7 @@ export function saveDone(ids) {
   try {
     store.set(LS_DONE, JSON.stringify(ids));
     store.set(LS_DATE, todayStr());
+    syncLocalToCloud('done', ids);
   } catch {}
 }
 
@@ -106,6 +110,7 @@ export function getChildName() {
 
 export function setChildName(name) {
   store.set(LS_CHILD_NAME, name);
+  syncLocalToCloud('child_name', name);
 }
 
 const DEFAULT_AGENDA = {
@@ -130,6 +135,7 @@ export function loadSchoolAgenda() {
 export function saveSchoolAgenda(agenda) {
   try {
     store.set(LS_AGENDA, JSON.stringify(agenda));
+    syncLocalToCloud('agenda', agenda);
   } catch (e) {}
 }
 
@@ -148,6 +154,7 @@ export function savePackedBooks(books) {
   try {
     store.set(LS_PACKED_BOOKS, JSON.stringify(books));
     store.set(LS_DATE, todayStr());
+    syncLocalToCloud('packed_books', books);
   } catch {}
 }
 
@@ -193,5 +200,6 @@ export function loadCalendarEvents() {
 export function saveCalendarEvents(events) {
   try {
     store.set(LS_EVENTS, JSON.stringify(events));
+    syncLocalToCloud('events', events);
   } catch (e) {}
 }

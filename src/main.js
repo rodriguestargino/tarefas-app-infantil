@@ -14,6 +14,7 @@ import {
 import { triggerHapticImpact, triggerHapticSuccess } from './services/haptics.js';
 import { renderAgenda, getSelectedDayIdx, setSelectedDayIdx } from './components/AgendaSection.js';
 import { renderEvents } from './components/EventsSection.js';
+import { pullCloudData, subscribeToChanges, getFamilyCode } from './services/supabase.js';
 import { warmUpAudio, playDoneSound } from './services/audio.js';
 import { renderTasks } from './components/TaskCard.js';
 import { updateStars, updateProgress } from './components/ProgressSection.js';
@@ -380,15 +381,23 @@ window.closeEventNotificationPopup = () => {
 };
 
 /* ═══════════════ INITIALIZATION ═══════════════ */
-function init() {
+async function init() {
   // Warm up audio context on first user interaction
   document.addEventListener('pointerdown', () => {
     warmUpAudio();
   }, { once: true });
 
+  const code = getFamilyCode();
+  if (code) {
+    // Pull latest data from remote Supabase cloud
+    await pullCloudData();
+    // Reload state in memory
+    TASKS = loadTasks();
+  }
+
   // Init UI parts
   initChildName();
-  renderTasks(TASKS, doneSaved, toggleDone, handleOpenTimer, swapCards);
+  renderTasks(TASKS, loadDone(), toggleDone, handleOpenTimer, swapCards);
   updateStars(TASKS.length);
   updateProgress(TASKS);
 
@@ -433,6 +442,29 @@ function init() {
 
   // Check for upcoming event notifications
   checkEventNotifications();
+
+  // Setup real-time listeners for database mutations from other devices in the family
+  if (code) {
+    subscribeToChanges((dataKey) => {
+      triggerHapticSuccess();
+      
+      if (dataKey === 'tasks' || dataKey === 'done' || dataKey === 'order') {
+        TASKS = loadTasks();
+        const currentDone = loadDone();
+        renderTasks(TASKS, currentDone, toggleDone, handleOpenTimer, swapCards);
+        updateStars(TASKS.length);
+        updateProgress(TASKS);
+      } else if (dataKey === 'agenda' || dataKey === 'packed_books') {
+        renderAgenda();
+      } else if (dataKey === 'events') {
+        renderEvents();
+      } else if (dataKey === 'child_name') {
+        initChildName();
+      }
+      
+      showToast('✨ Sincronizado em tempo real!');
+    });
+  }
 }
 
 // Start
