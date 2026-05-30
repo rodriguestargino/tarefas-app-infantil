@@ -100,11 +100,6 @@ export function openParentDashboard() {
   modal.classList.add('show');
   triggerHapticImpact();
 
-  if (!supabase) {
-    const syncTab = document.querySelector('.parent-tab-btn[data-tab="sync"]');
-    if (syncTab) syncTab.style.display = 'none';
-  }
-
   setParentTab('reports');
 }
 
@@ -358,21 +353,18 @@ function renderParentTasksList() {
 
 function renderSyncAdmin(container) {
   container.innerHTML = `
-    <h3 style="color:white; margin-bottom:12px; font-weight:800;">☁️ Sincronização em Família</h3>
+    <h3 style="color:white; margin-bottom:12px; font-weight:800;">☁️ Nuvem em Família</h3>
     <p style="color:rgba(255,255,255,0.6); font-size:0.85rem; line-height:1.4; margin-top:0; margin-bottom:16px;">
-      Sincronize tarefas e prêmios em tempo real entre o celular dos pais e o tablet das crianças!
+      Mantenha o app sincronizado entre os celulares dos pais e o tablet da criança. As atividades e prêmios serão atualizados em tempo real.
     </p>
 
-    <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:16px; margin-bottom:16px;">
-      <div id="parentCloudStatus" style="font-size:0.9rem; margin-bottom:12px; font-weight:700; color:rgba(255,255,255,0.85);">
-        Carregando status...
-      </div>
-      <div id="parentCloudActions"></div>
+    <div id="parentCloudStatusArea">
+      Carregando...
     </div>
-
-    <div style="background:rgba(255,255,255,0.03); border-radius:18px; padding:12px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
+    
+    <div style="background:rgba(255,255,255,0.03); border-radius:18px; padding:12px; border:1px solid rgba(255,255,255,0.05); text-align:center; margin-top: 16px;">
       <span style="font-size:0.75rem; color:rgba(255,255,255,0.4); font-weight:600;">
-        🛡️ Seus dados são salvos localmente primeiro e criptografados em trânsito.
+        🛡️ Controle Parental Funcional: Seus dados são salvos localmente e criptografados na nuvem.
       </span>
     </div>
   `;
@@ -381,44 +373,42 @@ function renderSyncAdmin(container) {
 }
 
 function renderParentCloudSyncDetails() {
-  const statusEl  = document.getElementById('parentCloudStatus');
-  const actionsEl = document.getElementById('parentCloudActions');
-  if (!statusEl || !actionsEl) return;
+  const statusArea = document.getElementById('parentCloudStatusArea');
+  if (!statusArea) return;
 
   const code = getFamilyCode();
 
-  if (!supabase) {
-    statusEl.innerHTML = `Sincronização na nuvem desligada. Operando offline.`;
-    actionsEl.innerHTML = `
-      <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; text-align:center;">
-        <span style="font-size:0.85rem; color:rgba(255,255,255,0.6);">
-          Para ativar a sincronização entre dispositivos, você precisa configurar as credenciais do Supabase. O aplicativo continuará funcionando perfeitamente 100% offline.
-        </span>
+  if (code) {
+    statusArea.innerHTML = `
+      <div style="background:rgba(99,230,190,0.1); border:2px solid #20c997; border-radius:20px; padding:16px; margin-bottom:16px; text-align:center;">
+        <div style="font-size:1.1rem; font-weight:800; color:#63E6BE; margin-bottom:8px;">Sincronização Ativada! ☁️</div>
+        <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px;">Seu Código de Família:</div>
+        <div style="font-size:1.6rem; font-weight:900; letter-spacing:2px; color:#FFD166; background:rgba(0,0,0,0.2); padding:8px 16px; border-radius:12px; display:inline-block; margin-bottom:12px;">${code}</div>
+        
+        <p style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-top:0;">Use este código no outro aparelho para vincular os dados.</p>
+        
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+          <button class="settings-save-btn" onclick="window.parentForceCloudPull()" style="background:#20c997; width:auto; font-size:0.85rem; box-shadow:none;">Atualizar Agora 🔄</button>
+          <button class="settings-save-btn" onclick="window.parentDisconnectFamily()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; width:auto; font-size:0.85rem; box-shadow:none;">Desativar Nuvem</button>
+        </div>
       </div>
     `;
-    return;
-  }
-
-  if (code) {
-    statusEl.innerHTML = `Conectado à Família: <span style="color:#FFD166; font-size:1.15rem; font-weight:900; letter-spacing:1px;">${code}</span> 👨‍👩‍👧‍👦`;
-    actionsEl.innerHTML = `
-      <div style="display:flex; gap:8px;">
-        <button class="settings-save-btn" onclick="window.parentDisconnectFamily()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; box-shadow:none;">Desconectar 🔌</button>
-        <button class="settings-save-btn" onclick="window.parentForceCloudPull()" style="background:#20c997; flex:1.5;">Atualizar Agora 🔄</button>
-      </div>`;
   } else {
-    statusEl.innerHTML = `Nuvem desligada. Operando no modo local offline-first.`;
-    actionsEl.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; flex:1;">
-          <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#20c997;">Conectar</button>
+    statusArea.innerHTML = `
+      <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:20px 16px; text-align:center; margin-bottom:16px;">
+        <button class="settings-save-btn" onclick="window.parentCreateFamilyGroup()" style="background:linear-gradient(135deg, #7048E8, #C5A3FF); box-shadow:0 4px 12px rgba(112,72,232,0.4); font-size:1.1rem; padding:12px 24px; border-radius:24px; margin-bottom:16px;">
+          Ativar Sincronização em Nuvem ☁️
+        </button>
+        
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:16px 0;">
+        
+        <div style="font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:8px; font-weight:700;">Já possui um código de outro aparelho?</div>
+        <div style="display:flex; gap:8px; justify-content:center;">
+          <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
+          <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
         </div>
-        <div style="text-align:center; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
-          <span style="font-size:0.8rem; color:rgba(255,255,255,0.5); font-weight:600; display:block; margin-bottom:8px;">Quer criar um novo grupo para sua família?</span>
-          <button class="settings-save-btn" onclick="window.parentCreateFamilyGroup()" style="background:linear-gradient(135deg,#7048E8,#C5A3FF); box-shadow:0 4px 12px rgba(112,72,232,0.3); width:auto; padding:6px 16px;">Criar Novo Grupo Família 👨‍👩‍👧‍👦</button>
-        </div>
-      </div>`;
+      </div>
+    `;
   }
 }
 
@@ -596,6 +586,12 @@ window.parentDisconnectFamily = () => {
 };
 
 window.parentConnectFamily = async () => {
+  if (!supabase) {
+    triggerHapticImpact();
+    alert('O desenvolvedor ainda não configurou as credenciais do Supabase na nuvem!\n\nO aplicativo continuará funcionando perfeitamente 100% offline.');
+    return;
+  }
+  
   const input = document.getElementById('parentJoinCodeInput');
   if (!input) return;
   const code = input.value.trim();
@@ -616,6 +612,12 @@ window.parentConnectFamily = async () => {
 };
 
 window.parentCreateFamilyGroup = async () => {
+  if (!supabase) {
+    triggerHapticImpact();
+    alert('O desenvolvedor ainda não configurou as credenciais do Supabase na nuvem!\n\nO aplicativo continuará funcionando perfeitamente 100% offline.');
+    return;
+  }
+  
   showToast('⚡ Criando grupo...');
   const code = await generateFamilyCode();
   if (code) {
