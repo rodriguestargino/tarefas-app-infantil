@@ -208,6 +208,7 @@ function updateDayHighlight() {
 
 window.setAgendaSelectedDay = (idx) => {
   setSelectedDayIdx(idx);
+  resetPackedBooks();
   renderAgenda();
   triggerHapticImpact();
   const dayNames = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
@@ -247,6 +248,13 @@ window.slideToSlide = (index) => {
   const dots = document.querySelectorAll('.nav-dot');
   if (!slides) return;
 
+  const slideTasks = document.getElementById('slideTasks');
+  const slideAgenda = document.getElementById('slideAgenda');
+
+  // Prepare both slides to be visible during transition
+  if (slideTasks) slideTasks.classList.remove('inactive-slide');
+  if (slideAgenda) slideAgenda.classList.remove('inactive-slide');
+
   currentSlide = index;
   slides.style.transform = `translateX(-${index * 50}%)`;
   
@@ -254,6 +262,17 @@ window.slideToSlide = (index) => {
     if (idx === index) dot.classList.add('active');
     else dot.classList.remove('active');
   });
+
+  // After transition completes (400ms), hide the inactive slide to avoid extra scroll height
+  setTimeout(() => {
+    if (currentSlide === index) {
+      if (index === 0 && slideAgenda) {
+        slideAgenda.classList.add('inactive-slide');
+      } else if (index === 1 && slideTasks) {
+        slideTasks.classList.add('inactive-slide');
+      }
+    }
+  }, 400);
 
   triggerHapticImpact();
 };
@@ -311,6 +330,10 @@ function init() {
 
   // Initialize and update day highlight (strictly automatic system date for Tasks slide)
   updateDayHighlight();
+
+  // Hide inactive slide initially to prevent extra scrolling height
+  const slideAgenda = document.getElementById('slideAgenda');
+  if (slideAgenda) slideAgenda.classList.add('inactive-slide');
 
   // Setup swipe listeners
   const viewport = document.querySelector('.app-viewport');

@@ -18,6 +18,13 @@
   box-sizing: border-box;
 }
 
+.app-slide.inactive-slide {
+  height: 0;
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 /* ═══════════════ NAV INDICATORS ═══════════════ */
 .nav-indicators {
   display: flex;
@@ -376,6 +383,35 @@
     right: 0 !important;
     margin: 0 0 12px auto !important;
     display: inline-flex !important;
+  }
+  .agenda-section {
+    gap: 12px;
+  }
+  .agenda-config-bar {
+    margin-top: 2px;
+  }
+  .agenda-config-btn {
+    padding: 6px 16px;
+    font-size: 0.9rem;
+  }
+  .agenda-editor-box {
+    gap: 10px;
+  }
+  .agenda-edit-group {
+    gap: 4px;
+  }
+  .agenda-day-select, .agenda-edit-input, .agenda-edit-textarea {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border-radius: 12px;
+  }
+  .agenda-edit-textarea {
+    min-height: 70px;
+  }
+  .grass-footer {
+    font-size: 1.6rem !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
   }
 }
 
