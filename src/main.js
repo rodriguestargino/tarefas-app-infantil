@@ -9,7 +9,12 @@ import {
   todayStr,
   resetPackedBooks,
   loadCalendarEvents,
-  saveCalendarEvents
+  saveCalendarEvents,
+  loadStarBalance,
+  saveStarBalance,
+  loadRewardsList,
+  loadRedemptionRequests,
+  saveRedemptionRequests
 } from './services/storage.js';
 import { triggerHapticImpact, triggerHapticSuccess } from './services/haptics.js';
 import { renderAgenda, getSelectedDayIdx, setSelectedDayIdx } from './components/AgendaSection.js';
@@ -37,6 +42,7 @@ import {
   hideTaskForm,
   saveTaskDetails
 } from './components/SettingsModal.js';
+import './components/ParentDashboard.js';
 
 /* ═══════════════ APP STATE ═══════════════ */
 let TASKS = loadTasks();
@@ -55,9 +61,13 @@ function toggleDone(e, card) {
   
   if (!wasDone) {
     triggerHapticSuccess();
+    saveStarBalance(loadStarBalance() + 1);
   } else {
     triggerHapticImpact();
+    saveStarBalance(Math.max(0, loadStarBalance() - 1));
   }
+  
+  window.renderRewardsShopShelf();
 }
 
 function handleOpenTimer(e, btn) {
@@ -65,10 +75,15 @@ function handleOpenTimer(e, btn) {
     // When timer finishes naturally (reaches 0)
     const card = grid.querySelector(`.task-card[data-id="${finishedId}"]`);
     if (card) {
-      card.classList.add('done');
-      const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
-      saveDone(ids);
-      updateProgress(TASKS);
+      const wasDone = card.classList.contains('done');
+      if (!wasDone) {
+        card.classList.add('done');
+        const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
+        saveDone(ids);
+        updateProgress(TASKS);
+        saveStarBalance(loadStarBalance() + 1);
+        window.renderRewardsShopShelf();
+      }
     }
   });
 }
@@ -154,9 +169,17 @@ window.stopTimer = () => {
 window.finishTimer = () => {
   finishTimer((finishedId) => {
     // When completed via "Marcar como feita!" button in modal
-    const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
-    saveDone(ids);
-    updateProgress(TASKS);
+    const card = grid.querySelector(`.task-card[data-id="${finishedId}"]`);
+    if (card) {
+      const wasDone = card.classList.contains('done');
+      if (!wasDone) {
+        const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
+        saveDone(ids);
+        updateProgress(TASKS);
+        saveStarBalance(loadStarBalance() + 1);
+        window.renderRewardsShopShelf();
+      }
+    }
   });
 };
 
@@ -326,6 +349,16 @@ window.resetAll = () => {
   showToast('🔄 Recomeçado!');
 };
 
+// Exposed for external components (e.g. ParentDashboard) to refresh the child's task view
+window.refreshChildView = () => {
+  TASKS = loadTasks();
+  const currentDone = loadDone();
+  renderTasks(TASKS, currentDone, toggleDone, handleOpenTimer, swapCards);
+  updateStars(TASKS.length);
+  updateProgress(TASKS);
+};
+
+
 function checkEventNotifications() {
   const events = loadCalendarEvents();
   const today = todayStr();
@@ -377,6 +410,101 @@ window.closeEventNotificationPopup = () => {
   if (popup) {
     popup.remove();
     triggerHapticImpact();
+  }
+};
+
+/* ═══════════════ LOJA DE RECOMPENSAS (REWARDS) ═══════════════ */
+window.renderRewardsShopShelf = () => {
+  const shelfContainer = document.getElementById('rewardShelfContainer');
+  const balanceSpan = document.getElementById('starBalanceSpan');
+  if (!shelfContainer || !balanceSpan) return;
+
+  const balance = loadStarBalance();
+  balanceSpan.textContent = `⭐ ${balance} ${balance === 1 ? 'Estrela' : 'Estrelas'}`;
+
+  const rewards = loadRewardsList();
+  const redemptions = loadRedemptionRequests();
+
+  shelfContainer.innerHTML = '';
+
+  if (rewards.length === 0) {
+    shelfContainer.innerHTML = `<div style="text-align:center; padding:12px; color:#888; font-size:0.9rem; font-weight:700;">Nenhum prêmio cadastrado ainda! Fale com seus pais 🦸‍♂️</div>`;
+    return;
+  }
+
+  rewards.forEach(rwd => {
+    const activeReq = redemptions.find(r => r.rewardId === rwd.id && r.status !== 'rejected');
+    
+    let actionHtml = '';
+    if (activeReq) {
+      if (activeReq.status === 'pending') {
+        actionHtml = `<span class="reward-status-label pending">⏳ Pendente</span>`;
+      } else if (activeReq.status === 'approved') {
+        actionHtml = `<span class="reward-status-label approved" onclick="window.clearApprovedRedemption('${activeReq.id}')" style="cursor:pointer;" title="Clique para limpar e usar novamente!">🎉 Liberado!</span>`;
+      }
+    } else {
+      if (balance >= rwd.cost) {
+        actionHtml = `<button class="top-nav-btn" onclick="window.redeemReward('${rwd.id}')" style="background:#FF8787; border:none; padding:6px 14px; border-radius:12px; font-weight:800; font-size:0.8rem; color:white; cursor:pointer; box-shadow: 0 3px 6px rgba(255,135,135,0.3);">Resgatar! 🎁</button>`;
+      } else {
+        actionHtml = `<button class="top-nav-btn" style="background:#ccc; border:none; padding:6px 14px; border-radius:12px; font-weight:800; font-size:0.85rem; color:white; cursor:not-allowed;" disabled>Falta ⭐ ${rwd.cost - balance}</button>`;
+      }
+    }
+
+    const card = document.createElement('div');
+    card.className = 'reward-item-card';
+    card.innerHTML = `
+      <div class="reward-title-box">
+        <span class="reward-item-title">${rwd.title}</span>
+        <span class="reward-cost-tag">⭐ ${rwd.cost}</span>
+      </div>
+      <div style="flex-shrink:0;">
+        ${actionHtml}
+      </div>
+    `;
+    shelfContainer.appendChild(card);
+  });
+};
+
+window.redeemReward = (rwdId) => {
+  const rewards = loadRewardsList();
+  const rwd = rewards.find(r => r.id === rwdId);
+  if (!rwd) return;
+
+  const balance = loadStarBalance();
+  if (balance < rwd.cost) {
+    showToast('⚠️ Estrelas insuficientes!');
+    return;
+  }
+
+  // Deduct stars immediately
+  saveStarBalance(balance - rwd.cost);
+
+  // Add request
+  const list = loadRedemptionRequests();
+  const newReq = {
+    id: 'req-' + Date.now(),
+    rewardId: rwdId,
+    rewardTitle: rwd.title,
+    cost: rwd.cost,
+    status: 'pending',
+    date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+  };
+  list.push(newReq);
+  saveRedemptionRequests(list);
+
+  triggerHapticSuccess();
+  playDoneSound();
+  showToast('🎁 Pedido enviado aos pais! Torcendo! 😍');
+  window.renderRewardsShopShelf();
+};
+
+window.clearApprovedRedemption = (reqId) => {
+  if (confirm('Já aproveitou seu prêmio? Vamos tirá-lo do baú para você poder conquistar outros! 😍')) {
+    const list = loadRedemptionRequests();
+    const filtered = list.filter(r => r.id !== reqId);
+    saveRedemptionRequests(filtered);
+    triggerHapticImpact();
+    window.renderRewardsShopShelf();
   }
 };
 
@@ -433,10 +561,15 @@ async function init() {
   restoreTimer(TASKS, (finishedId) => {
     const card = grid.querySelector(`.task-card[data-id="${finishedId}"]`);
     if (card) {
-      card.classList.add('done');
-      const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
-      saveDone(ids);
-      updateProgress(TASKS);
+      const wasDone = card.classList.contains('done');
+      if (!wasDone) {
+        card.classList.add('done');
+        const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
+        saveDone(ids);
+        updateProgress(TASKS);
+        saveStarBalance(loadStarBalance() + 1);
+        window.renderRewardsShopShelf();
+      }
     }
   });
 
@@ -460,11 +593,22 @@ async function init() {
         renderEvents();
       } else if (dataKey === 'child_name') {
         initChildName();
+      } else if (dataKey === 'star_balance' || dataKey === 'rewards' || dataKey === 'redemptions') {
+        window.renderRewardsShopShelf();
+        
+        // If parent dashboard is open, refresh active tab
+        const activeTabBtn = document.querySelector('.parent-tab-btn.active');
+        if (activeTabBtn && window.setParentTab) {
+          window.setParentTab(activeTabBtn.dataset.tab);
+        }
       }
       
       showToast('✨ Sincronizado em tempo real!');
     });
   }
+
+  // Render rewards shop shelf initially
+  window.renderRewardsShopShelf();
 }
 
 // Start

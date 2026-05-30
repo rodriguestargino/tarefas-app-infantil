@@ -88,7 +88,10 @@ function getLocalStorageKey(dataKey) {
     events: 'tarefas_events_calendar',
     child_name: 'tarefas_child_name',
     done: 'tarefas_done',
-    packed_books: 'tarefas_packed_books'
+    packed_books: 'tarefas_packed_books',
+    star_balance: 'tarefas_star_balance',
+    rewards: 'tarefas_rewards_list',
+    redemptions: 'tarefas_redemption_requests'
   };
   return keys[dataKey] || null;
 }

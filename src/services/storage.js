@@ -10,6 +10,9 @@ const LS_CHILD_NAME = 'tarefas_child_name';
 const LS_AGENDA       = 'tarefas_school_agenda';
 const LS_PACKED_BOOKS = 'tarefas_packed_books';
 const LS_EVENTS       = 'tarefas_events_calendar';
+const LS_STAR_BALANCE = 'tarefas_star_balance';
+const LS_REWARDS_LIST = 'tarefas_rewards_list';
+const LS_REDEMPTIONS  = 'tarefas_redemption_requests';
 
 export const store = (() => {
   const mem = {};
@@ -202,4 +205,58 @@ export function saveCalendarEvents(events) {
     store.set(LS_EVENTS, JSON.stringify(events));
     syncLocalToCloud('events', events);
   } catch (e) {}
+}
+
+export function loadStarBalance() {
+  try {
+    const raw = store.get(LS_STAR_BALANCE);
+    return raw ? parseInt(raw) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function saveStarBalance(balance) {
+  try {
+    store.set(LS_STAR_BALANCE, String(balance));
+    syncLocalToCloud('star_balance', balance);
+  } catch {}
+}
+
+const DEFAULT_REWARDS = [
+  { id: 'rwd-videogame', title: 'Jogar videogame 🎮', cost: 10 },
+  { id: 'rwd-icecream', title: 'Sorvete no Domingo 🍦', cost: 15 },
+  { id: 'rwd-park', title: 'Passear no Parque 🌳', cost: 25 }
+];
+
+export function loadRewardsList() {
+  try {
+    const raw = store.get(LS_REWARDS_LIST);
+    return raw ? JSON.parse(raw) : DEFAULT_REWARDS;
+  } catch {
+    return DEFAULT_REWARDS;
+  }
+}
+
+export function saveRewardsList(list) {
+  try {
+    store.set(LS_REWARDS_LIST, JSON.stringify(list));
+    syncLocalToCloud('rewards', list);
+  } catch {}
+}
+
+export function loadRedemptionRequests() {
+  try {
+    const raw = store.get(LS_REDEMPTIONS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveRedemptionRequests(list) {
+  try {
+    store.set(LS_REDEMPTIONS, JSON.stringify(list));
+    syncLocalToCloud('redemptions', list);
+  } catch {}
 }

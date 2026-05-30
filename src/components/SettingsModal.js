@@ -5,7 +5,8 @@ import {
   generateFamilyCode,
   joinFamily,
   pullCloudData,
-  setFamilyCode
+  setFamilyCode,
+  supabase
 } from '../services/supabase.js';
 
 export function initChildName() {
@@ -218,6 +219,16 @@ export function renderCloudSyncSection() {
   if (!statusEl || !actionsEl) return;
 
   const code = getFamilyCode();
+
+  if (!supabase) {
+    const section = statusEl.closest('.settings-section');
+    if (section) {
+      section.style.display = 'none';
+      const hr = section.nextElementSibling;
+      if (hr && hr.tagName === 'HR') hr.style.display = 'none';
+    }
+    return;
+  }
 
   if (code) {
     statusEl.innerHTML = `Conectado à Família: <span style="color: #FFD166; font-size: 1.15rem; font-weight: 900; letter-spacing: 1px; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${code}</span> 👨‍👩‍👧‍👦`;

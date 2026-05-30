@@ -82,20 +82,56 @@
   </div>
 </div>
 
+<!-- PARENTAL GATE MODAL -->
+<div class="timer-modal" id="parentGateModal">
+  <div class="parent-gate-box">
+    <button class="timer-close" onclick="closeParentGate()">✕</button>
+    <div class="parent-gate-title">🛡️ Central dos Pais 📊</div>
+    <div class="parent-gate-subtitle">Resolva o desafio matemático para entrar:</div>
+    <div class="parent-gate-question" id="parentGateQuestion">6 x 7 = ?</div>
+    <input type="number" id="parentGateInput" class="parent-gate-input" placeholder="Sua resposta" autofocus onkeydown="if(event.key === 'Enter') checkParentGateAnswer()">
+    <div class="timer-btns">
+      <button class="tbtn tbtn-done" style="background:#E67E22; border-color:#E67E22; width: 100%;" onclick="checkParentGateAnswer()">Verificar 🔑</button>
+    </div>
+  </div>
+</div>
+
+<!-- PARENT DASHBOARD MODAL -->
+<div class="timer-modal" id="parentDashboardModal">
+  <div class="settings-box" style="background: #1A1B2F; border: 3px solid #7048E8; max-width: 480px; width: 95%;">
+    <button class="timer-close" onclick="closeParentDashboard()" style="color: white; opacity: 0.8;">✕</button>
+    <h2 class="settings-title" style="color: white; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">🛡️ Central dos Pais 📊</h2>
+    
+    <!-- Nome do Pequeno Super-Herói -->
+    <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:12px 14px; margin-bottom:16px;">
+      <h4 style="color:#74C0FC; margin:0 0 8px 0; font-weight:800; font-size:0.9rem;">🦸 Nome do Pequeno Super-Herói</h4>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="parentKidNameInput" placeholder="Ex: Pedrinho, Sofia..." maxlength="18" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; flex:1;">
+        <button class="settings-save-btn" onclick="window.saveParentKidName()" style="width:auto; white-space:nowrap; background:#74C0FC; box-shadow:none; padding:4px 12px; font-size:0.85rem; border-radius:12px;">Salvar</button>
+      </div>
+    </div>
+    
+    <!-- Tab navigation -->
+    <div class="parent-tab-row">
+      <button class="parent-tab-btn active" data-tab="reports" onclick="setParentTab('reports')">📊 Relatórios</button>
+      <button class="parent-tab-btn" data-tab="rewards" onclick="setParentTab('rewards')">🎁 Prêmios</button>
+      <button class="parent-tab-btn" data-tab="activities" onclick="setParentTab('activities')">⚙️ Atividades</button>
+      <button class="parent-tab-btn" data-tab="sync" onclick="setParentTab('sync')">☁️ Nuvem</button>
+    </div>
+
+    <!-- Active Tab content -->
+    <div id="parentTabContent" style="min-height: 250px;">
+      <!-- Filled dynamically by ParentDashboard.js -->
+    </div>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="timer-modal" id="settingsModal">
   <div class="settings-box">
     <button class="timer-close" onclick="closeSettingsModal()">✕</button>
     <h2 class="settings-title">Configurações ⚙️</h2>
     
-    <!-- Child Name Section -->
-    <div class="settings-section">
-      <label class="settings-label">Nome do Supercriança:</label>
-      <input type="text" id="kidNameInput" placeholder="Ex: Pedrinho, Sofia..." maxlength="18" class="settings-name-input">
-      <button class="settings-save-btn" onclick="saveKidName()">OK</button>
-    </div>
-    
-    <hr class="settings-divider">
 
     <!-- Sincronização em Família Section -->
     <div class="settings-section">
@@ -186,7 +222,7 @@
             <h1>✨ Minhas Tarefas ✨</h1>
             <div class="subtitle">Hoje eu consigo fazer tudo! 💪</div>
           </div>
-          <div class="name-badge">Olá, <span id="childNameSpan">Supercriança!</span> 🦸 <button class="settings-trigger-btn" onclick="openSettingsModal()">⚙️</button></div>
+          <div class="name-badge">Olá, <span id="childNameSpan">Supercriança!</span> 🦸 <button class="settings-trigger-btn" onclick="openParentGate()" style="background: linear-gradient(135deg, #7048E8, #C5A3FF); color: white; border: none; padding: 4px 10px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; box-shadow: 0 4px 8px rgba(112,72,232,0.25);">🛡️ Pais</button></div>
         </div>
 
         <div class="days-row" id="daysRow">
@@ -221,6 +257,17 @@
         </div>
 
         <div class="tasks-grid" id="tasksGrid"></div>
+
+        <!-- LOJA DE RECOMPENSAS (REWARDS) -->
+        <div class="rewards-shop-card" id="rewardsShopShelf">
+          <div class="star-balance-banner">
+            <span>🎁 Meu Baú de Prêmios 🌟</span>
+            <span id="starBalanceSpan">⭐ 0 Estrelas</span>
+          </div>
+          <div class="reward-shelf" id="rewardShelfContainer">
+            <!-- Dynamically populated card items -->
+          </div>
+        </div>
 
         <button class="reset-btn" onclick="resetAll()">🔄 Recomeçar o dia</button>
         <div class="grass-footer">🌿🌻🌿🌼🌿🦋🌿🌸🌿</div>

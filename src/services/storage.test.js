@@ -17,7 +17,13 @@ import {
   loadPackedBooks,
   savePackedBooks,
   loadCalendarEvents,
-  saveCalendarEvents
+  saveCalendarEvents,
+  loadStarBalance,
+  saveStarBalance,
+  loadRewardsList,
+  saveRewardsList,
+  loadRedemptionRequests,
+  saveRedemptionRequests
 } from './storage.js';
 
 describe('Storage Service Tests', () => {
@@ -121,5 +127,29 @@ describe('Storage Service Tests', () => {
     ];
     saveCalendarEvents(customEvents);
     expect(loadCalendarEvents()).toEqual(customEvents);
+  });
+
+  it('should manage stars, rewards and redemptions', () => {
+    // Star Balance
+    expect(loadStarBalance()).toBe(0);
+    saveStarBalance(10);
+    expect(loadStarBalance()).toBe(10);
+
+    // Rewards List
+    const defaultRewards = loadRewardsList();
+    expect(defaultRewards).toBeInstanceOf(Array);
+    expect(defaultRewards.length).toBe(3);
+    expect(defaultRewards[0]).toHaveProperty('title');
+    expect(defaultRewards[0]).toHaveProperty('cost');
+
+    const customRewards = [{ id: '1', title: 'Sorvete 🍦', cost: 5 }];
+    saveRewardsList(customRewards);
+    expect(loadRewardsList()).toEqual(customRewards);
+
+    // Redemption Requests
+    expect(loadRedemptionRequests()).toEqual([]);
+    const requests = [{ id: 'req-1', rewardId: '1', status: 'pending' }];
+    saveRedemptionRequests(requests);
+    expect(loadRedemptionRequests()).toEqual(requests);
   });
 });
