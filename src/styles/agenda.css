@@ -1,0 +1,409 @@
+/* ═══════════════ VIEWPORT SLIDER ═══════════════ */
+.app-viewport {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-slides {
+  display: flex;
+  width: 200%;
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.app-slide {
+  width: 50%;
+  flex-shrink: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+/* ═══════════════ NAV INDICATORS ═══════════════ */
+.nav-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0 18px 0;
+  position: relative;
+  z-index: 10;
+}
+
+.nav-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+
+.nav-dot.active {
+  background: linear-gradient(135deg, #FF6CAB, #FF9DC1);
+  transform: scale(1.35);
+  box-shadow: 0 4px 10px rgba(255,108,171,0.4);
+}
+
+/* Helper navigation bar at top */
+.slide-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.slide-nav-btn {
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid white;
+  border-radius: 18px;
+  padding: 6px 14px;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #FF6CAB;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+}
+
+.slide-nav-btn:hover {
+  background: #FF6CAB;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════ AGENDA SCREEN STYLES ═══════════════ */
+.agenda-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Subject Block */
+.subjects-card {
+  background: white;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 3px solid #74C0FC;
+  position: relative;
+  overflow: hidden;
+  animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+
+.subjects-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 6px;
+  background: linear-gradient(90deg, #74C0FC, #C5A3FF);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.subjects-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.subject-badge {
+  background: linear-gradient(135deg, #E7F5FF, #D0EBFF);
+  color: #1971C2;
+  border: 2px solid #A5D8FF;
+  border-radius: 16px;
+  padding: 8px 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.03);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: popIn 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+
+.no-subjects-msg {
+  color: #888;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px;
+}
+
+/* Backpack/Mochila Card */
+.backpack-card {
+  background: white;
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 3px solid #FF9DC1;
+  position: relative;
+  overflow: hidden;
+  animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1) 0.1s both;
+}
+
+.backpack-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 6px;
+  background: linear-gradient(90deg, #FF9DC1, #FFE066);
+}
+
+.backpack-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #666;
+}
+
+.backpack-progress .pct {
+  background: #FFF0F6;
+  color: #E64980;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid #FFDEEB;
+}
+
+.backpack-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.backpack-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #FFF9DB;
+  border: 2px dashed #FFE066;
+  border-radius: 18px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+.backpack-item:hover {
+  transform: translateY(-1px);
+  background: #FFF3BF;
+}
+
+.backpack-checkbox {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #FFE066;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  flex-shrink: 0;
+}
+
+.backpack-item-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #5C940E;
+  transition: all 0.25s;
+}
+
+/* Checked Backpack Item */
+.backpack-item.packed {
+  background: #EAF9E7 !important;
+  border-color: #8CE99A !important;
+  opacity: 0.85;
+}
+
+.backpack-item.packed .backpack-checkbox {
+  background: #40C057;
+  border-color: #40C057;
+  color: white;
+  transform: scale(1.1);
+}
+
+.backpack-item.packed .backpack-item-name {
+  color: #888;
+  text-decoration: line-through;
+}
+
+.no-items-msg {
+  color: #888;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 18px;
+  background: #F8F9FA;
+  border-radius: 16px;
+  border: 2px dashed #E9ECEF;
+}
+
+/* ═══════════════ AGENDA CONFIG MODAL ═══════════════ */
+.agenda-config-bar {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.agenda-config-btn {
+  background: #FFF0F6;
+  border: 3px solid #FF9DC1;
+  border-radius: 20px;
+  padding: 8px 22px;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #E64980;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255,157,193,0.15);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agenda-config-btn:hover {
+  background: #FF6CAB;
+  color: white;
+  border-color: #FF6CAB;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255,108,171,0.3);
+}
+
+/* Form layout in settings modal */
+.agenda-editor-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.agenda-day-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agenda-day-select {
+  flex-grow: 1;
+  padding: 10px 14px;
+  border: 3px solid #FFD166;
+  border-radius: 16px;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #555;
+  outline: none;
+  background: white;
+}
+
+.agenda-edit-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agenda-edit-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #555;
+}
+
+.agenda-edit-input {
+  padding: 10px 14px;
+  border: 3px solid #E9ECEF;
+  border-radius: 16px;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.agenda-edit-input:focus {
+  border-color: #74C0FC;
+}
+
+.agenda-edit-textarea {
+  padding: 10px 14px;
+  border: 3px solid #E9ECEF;
+  border-radius: 16px;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: 0.95rem;
+  outline: none;
+  min-height: 80px;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.agenda-edit-textarea:focus {
+  border-color: #74C0FC;
+}
+
+.agenda-edit-hint {
+  font-size: 0.78rem;
+  color: #888;
+  font-weight: 600;
+}
+
+/* ═══════════════ RESPONSIVE ADJUSTMENTS ═══════════════ */
+@media (max-width: 520px) {
+  .slide-nav-bar {
+    margin-bottom: 12px;
+  }
+  .backpack-card, .subjects-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+  .agenda-trigger-btn {
+    position: relative !important;
+    top: 0 !important;
+    right: 0 !important;
+    margin: 0 0 12px auto !important;
+    display: inline-flex !important;
+  }
+}
+
+/* Botão Flutuante de Atalho da Agenda */
+.agenda-trigger-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: white;
+  border: 3px solid #74C0FC;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #1971C2;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(116, 192, 252, 0.15);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 100;
+}
+
+.agenda-trigger-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  background: #74C0FC;
+  color: white;
+  box-shadow: 0 6px 16px rgba(116, 192, 252, 0.3);
+}

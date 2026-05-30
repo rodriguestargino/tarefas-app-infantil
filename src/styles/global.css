@@ -96,3 +96,13 @@ body {
   transition: opacity .3s, transform .3s;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Desabilitar clique e hover nos dias da semana apenas na tela de tarefas (automático do sistema) */
+#slideTasks .day-btn {
+  pointer-events: none;
+  cursor: default;
+}
+
+#slideTasks .day-btn:hover {
+  transform: none !important;
+}

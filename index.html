@@ -154,53 +154,73 @@
   </div>
 </div>
 
-<!-- PAGE -->
-<div class="container">
+<!-- PAGE VIEWPORT -->
+<div class="app-viewport">
+  <div class="app-slides" id="appSlides">
+    
+    <!-- TELA 1: Minhas Tarefas -->
+    <div class="app-slide" id="slideTasks">
+      <div class="container">
+        <button class="agenda-trigger-btn" onclick="window.slideToAgenda()">📅 Minha Agenda</button>
+        <div class="header">
+          <span class="sun-icon">☀️</span>
+          <div class="title-box">
+            <h1>✨ Minhas Tarefas ✨</h1>
+            <div class="subtitle">Hoje eu consigo fazer tudo! 💪</div>
+          </div>
+          <div class="name-badge">Olá, <span id="childNameSpan">Supercriança!</span> 🦸 <button class="settings-trigger-btn" onclick="openSettingsModal()">⚙️</button></div>
+        </div>
 
-  <div class="header">
-    <span class="sun-icon">☀️</span>
-    <div class="title-box">
-      <h1>✨ Minhas Tarefas ✨</h1>
-      <div class="subtitle">Hoje eu consigo fazer tudo! 💪</div>
+        <div class="days-row" id="daysRow">
+          <button class="day-btn">☀️ Seg</button>
+          <button class="day-btn">🌈 Ter</button>
+          <button class="day-btn">🌸 Qua</button>
+          <button class="day-btn">⭐ Qui</button>
+          <button class="day-btn">🎉 Sex</button>
+          <button class="day-btn">🎮 Sáb</button>
+          <button class="day-btn">🌙 Dom</button>
+        </div>
+
+        <div class="celebration" id="celebration">
+          <div class="confetti-row">🎊 🎉 🥳 🎊 🎉</div>
+          <h2>Uhuuu! Parabéns! 🏆</h2>
+          <p>Você completou todas as tarefas!<br>Você é incrível! ⭐⭐⭐</p>
+          <div class="confetti-row" style="margin-top:8px">🌟 💫 ✨ 🌟 💫</div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-label">
+            Progresso: <span class="count" id="doneCount">0</span> de <span class="count" id="totalCount">8</span> tarefas! 🚀
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+          </div>
+          <div class="stars-row" id="starsRow"></div>
+        </div>
+
+        <div class="drag-hint">
+          <span>✋ Segure e arraste para mudar a ordem</span>
+        </div>
+
+        <div class="tasks-grid" id="tasksGrid"></div>
+
+        <button class="reset-btn" onclick="resetAll()">🔄 Recomeçar o dia</button>
+        <div class="grass-footer">🌿🌻🌿🌼🌿🦋🌿🌸🌿</div>
+      </div>
     </div>
-    <div class="name-badge">Olá, <span id="childNameSpan">Supercriança!</span> 🦸 <button class="settings-trigger-btn" onclick="openSettingsModal()">⚙️</button></div>
-  </div>
 
-  <div class="days-row" id="daysRow">
-    <button class="day-btn" onclick="setDay(this)">☀️ Seg</button>
-    <button class="day-btn" onclick="setDay(this)">🌈 Ter</button>
-    <button class="day-btn" onclick="setDay(this)">🌸 Qua</button>
-    <button class="day-btn" onclick="setDay(this)">⭐ Qui</button>
-    <button class="day-btn" onclick="setDay(this)">🎉 Sex</button>
-    <button class="day-btn" onclick="setDay(this)">🎮 Sáb</button>
-    <button class="day-btn" onclick="setDay(this)">🌙 Dom</button>
-  </div>
-
-  <div class="celebration" id="celebration">
-    <div class="confetti-row">🎊 🎉 🥳 🎊 🎉</div>
-    <h2>Uhuuu! Parabéns! 🏆</h2>
-    <p>Você completou todas as tarefas!<br>Você é incrível! ⭐⭐⭐</p>
-    <div class="confetti-row" style="margin-top:8px">🌟 💫 ✨ 🌟 💫</div>
-  </div>
-
-  <div class="progress-section">
-    <div class="progress-label">
-      Progresso: <span class="count" id="doneCount">0</span> de <span class="count" id="totalCount">8</span> tarefas! 🚀
+    <!-- TELA 2: Minha Agenda -->
+    <div class="app-slide" id="slideAgenda">
+      <!-- Dinamicamente preenchido pelo AgendaSection.js -->
     </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-    </div>
-    <div class="stars-row" id="starsRow"></div>
+
   </div>
+</div>
 
-  <div class="drag-hint">
-    <span>✋ Segure e arraste para mudar a ordem</span>
-  </div>
-
-  <div class="tasks-grid" id="tasksGrid"></div>
-
-  <button class="reset-btn" onclick="resetAll()">🔄 Recomeçar o dia</button>
-  <div class="grass-footer">🌿🌻🌿🌼🌿🦋🌿🌸🌿</div>
+<!-- Indicadores de Navegação (Bolinhas) -->
+<div class="nav-indicators" id="navIndicators">
+  <span class="nav-dot active" data-slide="0" onclick="window.slideToSlide(0)"></span>
+  <span class="nav-dot" data-slide="1" onclick="window.slideToSlide(1)"></span>
 </div>
 
 <script type="module" src="/src/main.js"></script>

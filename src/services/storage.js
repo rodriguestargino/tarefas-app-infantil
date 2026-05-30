@@ -6,6 +6,8 @@ const LS_DATE       = 'tarefas_date';
 const LS_TIMER      = 'tarefas_timer';
 const LS_TASKS_LIST = 'tarefas_custom_list';
 const LS_CHILD_NAME = 'tarefas_child_name';
+const LS_AGENDA       = 'tarefas_school_agenda';
+const LS_PACKED_BOOKS = 'tarefas_packed_books';
 
 export const store = (() => {
   const mem = {};
@@ -22,7 +24,11 @@ export const store = (() => {
 })();
 
 export function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function loadTasks() {
@@ -99,4 +105,51 @@ export function getChildName() {
 
 export function setChildName(name) {
   store.set(LS_CHILD_NAME, name);
+}
+
+const DEFAULT_AGENDA = {
+  0: { subjects: "Português 📝, Matemática 🔢", books: ["Trilhas modulo 2"] },
+  1: { subjects: "Porgugues, Matematica, História, Ed. Física, Informatica", books: ["Livro de Inglês", "Trilhas modulo 2"] },
+  2: { subjects: "Matemática, Ingles, Portugues", books: ["Trilhas modulo 2", "Ingles"] },
+  3: { subjects: "Ingles, Produção de Texto, Geografia", books: ["Ingles", "Trilhas modulo 2"] },
+  4: { subjects: "Projeto de Vida, Ciencias, Projeto de Leitura, Arte", books: ["Projeto de Vida", "Trilhas modulo 2", "Arte"] },
+  5: { subjects: "Dia de Descanso! 🎮", books: ["Aproveitar o fim de semana!"] },
+  6: { subjects: "Preparar para a semana! 🎒", books: ["Organizar uniforme e mochila!"] }
+};
+
+export function loadSchoolAgenda() {
+  try {
+    const raw = store.get(LS_AGENDA);
+    return raw ? JSON.parse(raw) : DEFAULT_AGENDA;
+  } catch (e) {
+    return DEFAULT_AGENDA;
+  }
+}
+
+export function saveSchoolAgenda(agenda) {
+  try {
+    store.set(LS_AGENDA, JSON.stringify(agenda));
+  } catch (e) {}
+}
+
+export function loadPackedBooks() {
+  try {
+    const date = store.get(LS_DATE);
+    if (date !== todayStr()) return [];
+    const raw = store.get(LS_PACKED_BOOKS);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function savePackedBooks(books) {
+  try {
+    store.set(LS_PACKED_BOOKS, JSON.stringify(books));
+    store.set(LS_DATE, todayStr());
+  } catch {}
+}
+
+export function resetPackedBooks() {
+  savePackedBooks([]);
 }

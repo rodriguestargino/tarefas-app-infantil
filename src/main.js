@@ -5,9 +5,12 @@ import {
   saveTasks,
   saveOrder,
   loadDone,
-  saveDone
+  saveDone,
+  todayStr,
+  resetPackedBooks
 } from './services/storage.js';
 import { triggerHapticImpact, triggerHapticSuccess } from './services/haptics.js';
+import { renderAgenda, getSelectedDayIdx, setSelectedDayIdx } from './components/AgendaSection.js';
 import { warmUpAudio } from './services/audio.js';
 import { renderTasks } from './components/TaskCard.js';
 import { updateStars, updateProgress } from './components/ProgressSection.js';
@@ -191,12 +194,95 @@ window.saveTaskDetails = () => {
   });
 };
 
-window.setDay = (btn) => {
-  const dayBtns = document.querySelectorAll('.day-btn');
+let lastCheckDate = todayStr();
+
+function updateDayHighlight() {
+  const dayBtns = document.querySelectorAll('#slideTasks .day-btn');
   dayBtns.forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  const todayIdx = new Date().getDay(); // 0 = Sunday
+  const btnIdx = todayIdx === 0 ? 6 : todayIdx - 1; // 0 = Seg, ..., 6 = Dom
+  if (dayBtns[btnIdx]) {
+    dayBtns[btnIdx].classList.add('active');
+  }
+}
+
+window.setAgendaSelectedDay = (idx) => {
+  setSelectedDayIdx(idx);
+  renderAgenda();
+  triggerHapticImpact();
+  const dayNames = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+  showToast(`📅 Dia selecionado: ${dayNames[idx]}!`);
+};
+
+function checkDateChange() {
+  const currentToday = todayStr();
+  if (currentToday !== lastCheckDate) {
+    lastCheckDate = currentToday;
+    
+    // Reset manual override on date transition
+    setSelectedDayIdx(null);
+    
+    // Automatically reset tasks
+    grid.querySelectorAll('.task-card').forEach(c => c.classList.remove('done'));
+    saveDone([]);
+    resetPackedBooks();
+    updateProgress(TASKS);
+    stopTimer(true);
+    
+    // Update the day of the week highlight
+    updateDayHighlight();
+    
+    // Re-render today's agenda
+    renderAgenda();
+    
+    showToast('🌅 Novo dia começou! Tarefas reiniciadas! 🌟');
+  }
+}
+
+/* ═══════════════ SLIDING NAVIGATION & GESTURES ═══════════════ */
+let currentSlide = 0;
+
+window.slideToSlide = (index) => {
+  const slides = document.getElementById('appSlides');
+  const dots = document.querySelectorAll('.nav-dot');
+  if (!slides) return;
+
+  currentSlide = index;
+  slides.style.transform = `translateX(-${index * 50}%)`;
+  
+  dots.forEach((dot, idx) => {
+    if (idx === index) dot.classList.add('active');
+    else dot.classList.remove('active');
+  });
+
   triggerHapticImpact();
 };
+
+window.slideToTasks = () => window.slideToSlide(0);
+window.slideToAgenda = () => window.slideToSlide(1);
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+function handleTouchStart(e) {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}
+
+function handleTouchEnd(e) {
+  const diffX = touchStartX - e.changedTouches[0].screenX;
+  const diffY = touchStartY - e.changedTouches[0].screenY;
+
+  // Swipe left: diffX > 0 -> go to slide 1 (Agenda)
+  // Swipe right: diffX < 0 -> go to slide 0 (Tasks)
+  if (Math.abs(diffX) > 60 && Math.abs(diffY) < 60) {
+    if (diffX > 0 && currentSlide === 0) {
+      window.slideToSlide(1);
+    } else if (diffX < 0 && currentSlide === 1) {
+      window.slideToSlide(0);
+    }
+  }
+}
 
 window.resetAll = () => {
   grid.querySelectorAll('.task-card').forEach(c => c.classList.remove('done'));
@@ -220,13 +306,23 @@ function init() {
   updateStars(TASKS.length);
   updateProgress(TASKS);
 
-  // Initialize day buttons
-  const dayBtns = document.querySelectorAll('.day-btn');
-  const todayIdx = new Date().getDay(); // 0 = Sunday
-  const btnIdx = todayIdx === 0 ? 6 : todayIdx - 1;
-  if (dayBtns[btnIdx]) {
-    dayBtns[btnIdx].classList.add('active');
+  // Render agenda
+  renderAgenda();
+
+  // Initialize and update day highlight (strictly automatic system date for Tasks slide)
+  updateDayHighlight();
+
+  // Setup swipe listeners
+  const viewport = document.querySelector('.app-viewport');
+  if (viewport) {
+    viewport.addEventListener('touchstart', handleTouchStart, { passive: true });
+    viewport.addEventListener('touchend', handleTouchEnd, { passive: true });
   }
+
+  // Setup periodic check and focus listeners to reset tasks on day changes
+  setInterval(checkDateChange, 10000);
+  document.addEventListener('visibilitychange', checkDateChange);
+  window.addEventListener('focus', checkDateChange);
 
   // Restore running timer if any
   restoreTimer(TASKS, (finishedId) => {

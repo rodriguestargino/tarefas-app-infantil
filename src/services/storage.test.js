@@ -11,7 +11,11 @@ import {
   loadTimerState,
   clearTimerState,
   getChildName,
-  setChildName
+  setChildName,
+  loadSchoolAgenda,
+  saveSchoolAgenda,
+  loadPackedBooks,
+  savePackedBooks
 } from './storage.js';
 
 describe('Storage Service Tests', () => {
@@ -71,5 +75,34 @@ describe('Storage Service Tests', () => {
     expect(loaded.has(1)).toBe(true);
     expect(loaded.has(3)).toBe(true);
     expect(loaded.has(2)).toBe(false);
+  });
+
+  it('should return todayStr in YYYY-MM-DD format in local timezone', () => {
+    const today = todayStr();
+    expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    
+    // Ensure it matches the actual current local date
+    const d = new Date();
+    const expected = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    expect(today).toBe(expected);
+  });
+
+  it('should manage weekly school agenda configuration', () => {
+    const agenda = loadSchoolAgenda();
+    expect(agenda).toBeDefined();
+    expect(agenda[0]).toHaveProperty('subjects');
+    expect(agenda[0]).toHaveProperty('books');
+    
+    const newAgenda = { ...agenda, 0: { subjects: 'Arte', books: ['Estojo de Giz'] } };
+    saveSchoolAgenda(newAgenda);
+    expect(loadSchoolAgenda()[0]).toEqual({ subjects: 'Arte', books: ['Estojo de Giz'] });
+  });
+
+  it('should manage daily packed books in mochila', () => {
+    savePackedBooks(['Estojo', 'Livro de Geografia']);
+    expect(loadPackedBooks()).toEqual(['Estojo', 'Livro de Geografia']);
+    
+    savePackedBooks([]);
+    expect(loadPackedBooks()).toEqual([]);
   });
 });

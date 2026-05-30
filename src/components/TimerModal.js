@@ -97,6 +97,17 @@ export function restoreTimer(tasks, onTimerFinished) {
   try {
     const saved = loadTimerState();
     if (!saved) return;
+
+    // Check if the timer belongs to a previous day in local time
+    const savedDate = new Date(saved.savedAt);
+    const today = new Date();
+    if (savedDate.getDate() !== today.getDate() || 
+        savedDate.getMonth() !== today.getMonth() || 
+        savedDate.getFullYear() !== today.getFullYear()) {
+      clearTimerState();
+      return;
+    }
+
     const task = tasks.find(t => t.id === saved.taskId);
     if (!task) { clearTimerState(); return; }
 
