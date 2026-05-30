@@ -62,8 +62,12 @@ export function renderAgenda() {
   // Build the complete HTML
   let html = `
     <div class="container">
-      <!-- Botão Minhas Tarefas no Canto Superior Direito -->
-      <button class="agenda-trigger-btn" onclick="window.slideToTasks()" style="border-color: #FF9DC1; color: #E64980; box-shadow: 0 4px 12px rgba(255,157,193,0.15);">🌟 Minhas Tarefas</button>
+      <!-- Top Navigation Bar -->
+      <div class="top-nav-bar">
+        <button class="top-nav-btn" data-tab="tasks" onclick="window.slideToTasks()">🌟 Tarefas</button>
+        <button class="top-nav-btn active" data-tab="agenda" onclick="window.slideToAgenda()">🎒 Agenda</button>
+        <button class="top-nav-btn" data-tab="events" onclick="window.slideToEvents()">📅 Provas e Festas</button>
+      </div>
 
       <!-- Header -->
       <div class="header" style="margin-bottom: 18px;">

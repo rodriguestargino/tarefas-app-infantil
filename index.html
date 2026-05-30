@@ -161,7 +161,12 @@
     <!-- TELA 1: Minhas Tarefas -->
     <div class="app-slide" id="slideTasks">
       <div class="container">
-        <button class="agenda-trigger-btn" onclick="window.slideToAgenda()">📅 Minha Agenda</button>
+        <!-- Top Navigation Bar -->
+        <div class="top-nav-bar">
+          <button class="top-nav-btn active" data-tab="tasks" onclick="window.slideToTasks()">🌟 Tarefas</button>
+          <button class="top-nav-btn" data-tab="agenda" onclick="window.slideToAgenda()">🎒 Agenda</button>
+          <button class="top-nav-btn" data-tab="events" onclick="window.slideToEvents()">📅 Provas e Festas</button>
+        </div>
         <div class="header">
           <span class="sun-icon">☀️</span>
           <div class="title-box">

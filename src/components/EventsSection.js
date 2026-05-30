@@ -48,8 +48,12 @@ export function renderEvents() {
 
   let html = `
     <div class="container">
-      <!-- Botão Voltar no Canto Superior Direito -->
-      <button class="agenda-trigger-btn" onclick="window.slideToTasks()" style="border-color: #C5A3FF; color: #7048E8; box-shadow: 0 4px 12px rgba(197,163,255,0.15);">🌟 Minhas Tarefas</button>
+      <!-- Top Navigation Bar -->
+      <div class="top-nav-bar">
+        <button class="top-nav-btn" data-tab="tasks" onclick="window.slideToTasks()">🌟 Tarefas</button>
+        <button class="top-nav-btn" data-tab="agenda" onclick="window.slideToAgenda()">🎒 Agenda</button>
+        <button class="top-nav-btn active" data-tab="events" onclick="window.slideToEvents()">📅 Provas e Festas</button>
+      </div>
 
       <!-- Header -->
       <div class="header" style="margin-bottom: 18px;">
