@@ -106,3 +106,15 @@ body {
 #slideTasks .day-btn:hover {
   transform: none !important;
 }
+
+/* ── App Version Footer ── */
+.app-version-footer {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.4);
+  font-weight: 700;
+  z-index: 100;
+  pointer-events: none;
+}

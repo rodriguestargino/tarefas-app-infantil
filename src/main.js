@@ -602,6 +602,12 @@ async function init() {
 
   // Render rewards shop shelf initially
   window.renderRewardsShopShelf();
+  
+  // Set app version
+  const versionEl = document.getElementById('appVersionDisplay');
+  if (versionEl) {
+    versionEl.textContent = `v${__APP_VERSION__}`;
+  }
 }
 
 // Start
