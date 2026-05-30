@@ -5,6 +5,7 @@ import { loadCalendarEvents, saveCalendarEvents } from '../services/storage.js';
 // In-memory states
 let selectedType = 'exam'; // Default type for new event
 let isFormVisible = false;
+let editingEventId = null; // ID of event being edited
 
 function getDaysRemaining(dateStr) {
   const today = new Date();
@@ -46,6 +47,9 @@ export function renderEvents() {
     other: '🎨 Outros'
   };
 
+  const formTitle = editingEventId ? '✏️ Editar Data Especial' : '✏️ Cadastrar Data Especial';
+  const saveBtnText = editingEventId ? 'Salvar Alterações 💾' : 'Salvar 💾';
+
   let html = `
     <div class="container">
       <!-- Top Navigation Bar -->
@@ -70,13 +74,13 @@ export function renderEvents() {
         <!-- BUTTON TO OPEN FORM -->
         <div class="agenda-config-bar" style="margin-bottom: 6px;">
           <button class="agenda-config-btn" onclick="window.toggleEventsEditor()" style="background: #F3F0FF; border-color: #C5A3FF; color: #7048E8; box-shadow: 0 4px 12px rgba(197,163,255,0.15);">
-            ${isFormVisible ? '❌ Fechar Cadastro' : '⚙️ Adicionar Nova Data'}
+            ${isFormVisible ? '❌ Cancelar' : '⚙️ Adicionar Nova Data'}
           </button>
         </div>
 
-        <!-- NEW EVENT FORM (Collapsible) -->
+        <!-- NEW/EDIT EVENT FORM (Collapsible) -->
         <div class="event-form-card" id="eventFormBox" style="display: ${isFormVisible ? 'block' : 'none'}; animation: popIn 0.3s cubic-bezier(.34,1.56,.64,1);">
-          <div class="event-form-title">✏️ Cadastrar Data Especial</div>
+          <div class="event-form-title">${formTitle}</div>
           
           <div class="agenda-editor-box">
             <div class="agenda-edit-group">
@@ -100,8 +104,8 @@ export function renderEvents() {
             </div>
 
             <div class="form-btns-row" style="margin-top: 10px;">
-              <button class="form-btn form-btn-cancel" onclick="window.toggleEventsEditor()">Fechar</button>
-              <button class="form-btn form-btn-save" onclick="window.saveNewCalendarEvent()" style="background:#C5A3FF; border-color:#C5A3FF;">Salvar 💾</button>
+              <button class="form-btn form-btn-cancel" onclick="window.toggleEventsEditor()">Cancelar</button>
+              <button class="form-btn form-btn-save" onclick="window.saveNewCalendarEvent()" style="background:#C5A3FF; border-color:#C5A3FF;">${saveBtnText}</button>
             </div>
           </div>
         </div>
@@ -113,7 +117,6 @@ export function renderEvents() {
               ? activeEvents.map(event => {
                   const daysLeft = getDaysRemaining(event.date);
                   let badgeText = '';
-                  let badgeClass = '';
                   
                   if (daysLeft === 0) {
                     badgeText = 'É HOJE! 🎉';
@@ -133,6 +136,7 @@ export function renderEvents() {
                       </div>
                       <div class="event-right">
                         <span class="event-days-badge">${badgeText}</span>
+                        <button class="event-delete-btn" onclick="window.editCalendarEvent('${event.id}')" title="Editar" style="border-color: #A5D8FF; color: #1971C2; margin-right: 4px; box-shadow: 0 2px 6px rgba(25,113,194,0.1);">✏️</button>
                         <button class="event-delete-btn" onclick="window.deleteCalendarEvent('${event.id}')" title="Excluir">🗑️</button>
                       </div>
                     </div>
@@ -164,6 +168,7 @@ export function renderEvents() {
                         </div>
                         <div class="event-right">
                           <span class="event-days-badge" style="background: #999; box-shadow: none;">Já passou!</span>
+                          <button class="event-delete-btn" onclick="window.editCalendarEvent('${event.id}')" title="Editar" style="border-color: #A5D8FF; color: #1971C2; margin-right: 4px; box-shadow: 0 2px 6px rgba(25,113,194,0.1);">✏️</button>
                           <button class="event-delete-btn" onclick="window.deleteCalendarEvent('${event.id}')">🗑️</button>
                         </div>
                       </div>
@@ -183,9 +188,9 @@ export function renderEvents() {
 
   container.innerHTML = html;
 
-  // Keep today's date as default in date input if form is open
+  // Keep today's date as default in date input if form is open and not editing
   const dateInput = document.getElementById('eventDateInput');
-  if (dateInput && !dateInput.value) {
+  if (dateInput && !dateInput.value && !editingEventId) {
     const d = new Date();
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -196,6 +201,9 @@ export function renderEvents() {
 
 export function toggleEventsEditor() {
   isFormVisible = !isFormVisible;
+  if (!isFormVisible) {
+    editingEventId = null;
+  }
   triggerHapticImpact();
   renderEvents();
   
@@ -209,6 +217,29 @@ export function selectEventType(type) {
   selectedType = type;
   triggerHapticImpact();
   renderEvents();
+}
+
+export function editCalendarEvent(id) {
+  const events = loadCalendarEvents();
+  const event = events.find(e => e.id === id);
+  if (!event) return;
+
+  editingEventId = id;
+  selectedType = event.type;
+  isFormVisible = true;
+
+  triggerHapticImpact();
+  renderEvents();
+
+  // Populate form inputs
+  const titleInput = document.getElementById('eventTitleInput');
+  const dateInput = document.getElementById('eventDateInput');
+  if (titleInput) titleInput.value = event.title;
+  if (dateInput) dateInput.value = event.date;
+
+  // Scroll form into view
+  const box = document.getElementById('eventFormBox');
+  if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 export function saveNewCalendarEvent() {
@@ -229,16 +260,29 @@ export function saveNewCalendarEvent() {
     return;
   }
 
-  const newEvent = {
-    id: 'evt-' + Date.now(),
-    title,
-    date,
-    type: selectedType,
-    notified: false
-  };
-
   const events = loadCalendarEvents();
-  events.push(newEvent);
+
+  if (editingEventId) {
+    const event = events.find(e => e.id === editingEventId);
+    if (event) {
+      event.title = title;
+      event.date = date;
+      event.type = selectedType;
+      // Reset notified state so that if the date changes to today/tomorrow, they get warned again
+      event.notified = false;
+    }
+    editingEventId = null;
+  } else {
+    const newEvent = {
+      id: 'evt-' + Date.now(),
+      title,
+      date,
+      type: selectedType,
+      notified: false
+    };
+    events.push(newEvent);
+  }
+
   saveCalendarEvents(events);
 
   triggerHapticSuccess();
@@ -254,7 +298,7 @@ export function saveNewCalendarEvent() {
   // Show dynamic toast
   const toast = document.getElementById('toast');
   if (toast) {
-    toast.textContent = '📅 Nova data especial salva com sucesso!';
+    toast.textContent = '💾 Alterações salvas com sucesso!';
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 1800);
   }
@@ -265,6 +309,12 @@ export function deleteCalendarEvent(id) {
     const events = loadCalendarEvents();
     const filtered = events.filter(e => e.id !== id);
     saveCalendarEvents(filtered);
+
+    // If we were editing this specific event, reset editing state
+    if (editingEventId === id) {
+      editingEventId = null;
+      isFormVisible = false;
+    }
 
     triggerHapticImpact();
     renderEvents();
@@ -283,3 +333,4 @@ window.toggleEventsEditor = () => toggleEventsEditor();
 window.selectEventType = (type) => selectEventType(type);
 window.saveNewCalendarEvent = () => saveNewCalendarEvent();
 window.deleteCalendarEvent = (id) => deleteCalendarEvent(id);
+window.editCalendarEvent = (id) => editCalendarEvent(id);
