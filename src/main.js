@@ -7,11 +7,14 @@ import {
   loadDone,
   saveDone,
   todayStr,
-  resetPackedBooks
+  resetPackedBooks,
+  loadCalendarEvents,
+  saveCalendarEvents
 } from './services/storage.js';
 import { triggerHapticImpact, triggerHapticSuccess } from './services/haptics.js';
 import { renderAgenda, getSelectedDayIdx, setSelectedDayIdx } from './components/AgendaSection.js';
-import { warmUpAudio } from './services/audio.js';
+import { renderEvents } from './components/EventsSection.js';
+import { warmUpAudio, playDoneSound } from './services/audio.js';
 import { renderTasks } from './components/TaskCard.js';
 import { updateStars, updateProgress } from './components/ProgressSection.js';
 import {
@@ -250,26 +253,33 @@ window.slideToSlide = (index) => {
 
   const slideTasks = document.getElementById('slideTasks');
   const slideAgenda = document.getElementById('slideAgenda');
+  const slideEvents = document.getElementById('slideEvents');
 
-  // Prepare both slides to be visible during transition
+  // Prepare all slides to be visible during transition
   if (slideTasks) slideTasks.classList.remove('inactive-slide');
   if (slideAgenda) slideAgenda.classList.remove('inactive-slide');
+  if (slideEvents) slideEvents.classList.remove('inactive-slide');
 
   currentSlide = index;
-  slides.style.transform = `translateX(-${index * 50}%)`;
+  slides.style.transform = `translateX(-${index * 33.333}%)`;
   
   dots.forEach((dot, idx) => {
     if (idx === index) dot.classList.add('active');
     else dot.classList.remove('active');
   });
 
-  // After transition completes (400ms), hide the inactive slide to avoid extra scroll height
+  // After transition completes (400ms), hide the inactive slides to avoid extra scroll height
   setTimeout(() => {
     if (currentSlide === index) {
-      if (index === 0 && slideAgenda) {
-        slideAgenda.classList.add('inactive-slide');
-      } else if (index === 1 && slideTasks) {
-        slideTasks.classList.add('inactive-slide');
+      if (index === 0) {
+        if (slideAgenda) slideAgenda.classList.add('inactive-slide');
+        if (slideEvents) slideEvents.classList.add('inactive-slide');
+      } else if (index === 1) {
+        if (slideTasks) slideTasks.classList.add('inactive-slide');
+        if (slideEvents) slideEvents.classList.add('inactive-slide');
+      } else if (index === 2) {
+        if (slideTasks) slideTasks.classList.add('inactive-slide');
+        if (slideAgenda) slideAgenda.classList.add('inactive-slide');
       }
     }
   }, 400);
@@ -279,6 +289,7 @@ window.slideToSlide = (index) => {
 
 window.slideToTasks = () => window.slideToSlide(0);
 window.slideToAgenda = () => window.slideToSlide(1);
+window.slideToEvents = () => window.slideToSlide(2);
 
 let touchStartX = 0;
 let touchStartY = 0;
@@ -292,13 +303,15 @@ function handleTouchEnd(e) {
   const diffX = touchStartX - e.changedTouches[0].screenX;
   const diffY = touchStartY - e.changedTouches[0].screenY;
 
-  // Swipe left: diffX > 0 -> go to slide 1 (Agenda)
-  // Swipe right: diffX < 0 -> go to slide 0 (Tasks)
+  // Swipe left: diffX > 0 -> go forward
+  // Swipe right: diffX < 0 -> go backward
   if (Math.abs(diffX) > 60 && Math.abs(diffY) < 60) {
-    if (diffX > 0 && currentSlide === 0) {
-      window.slideToSlide(1);
-    } else if (diffX < 0 && currentSlide === 1) {
-      window.slideToSlide(0);
+    if (diffX > 0) {
+      if (currentSlide === 0) window.slideToSlide(1);
+      else if (currentSlide === 1) window.slideToSlide(2);
+    } else if (diffX < 0) {
+      if (currentSlide === 1) window.slideToSlide(0);
+      else if (currentSlide === 2) window.slideToSlide(1);
     }
   }
 }
@@ -310,6 +323,60 @@ window.resetAll = () => {
   stopTimer(true);
   triggerHapticImpact();
   showToast('🔄 Recomeçado!');
+};
+
+function checkEventNotifications() {
+  const events = loadCalendarEvents();
+  const today = todayStr();
+  
+  // Calculate tomorrow's date string in local timezone
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const tomorrow = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  // Find events for today or tomorrow that haven't been notified yet
+  const pending = events.filter(e => !e.notified && (e.date === today || e.date === tomorrow));
+  if (pending.length === 0) return;
+
+  // Process the first pending notification
+  const event = pending[0];
+  const isToday = event.date === today;
+  const whenLabel = isToday ? 'HOJE! 🌟' : 'AMANHÃ! ⏰';
+  const emoji = event.type === 'exam' ? '📝' : event.type === 'party' ? '🎂' : event.type === 'school' ? '🎒' : '🎨';
+
+  const popupHtml = `
+    <div class="event-popup-backdrop" id="eventNotificationPopup">
+      <div class="event-popup-box">
+        <span class="event-popup-emoji">${emoji}</span>
+        <div class="event-popup-title">${isToday ? 'É hoje, Campeão! 🎉' : 'Amanhã tem Aventura! ⏰'}</div>
+        <div class="event-popup-message">
+          Você tem um compromisso marcado para <b>${whenLabel}</b>:<br><br>
+          <span style="font-size: 1.25rem; color: #E67E22; font-weight: 800;">"${event.title}"</span>
+        </div>
+        <button class="event-popup-btn" onclick="window.closeEventNotificationPopup()">Eba! Entendido! 👍</button>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', popupHtml);
+  triggerHapticSuccess();
+  
+  // Wait a small bit to play sound
+  setTimeout(() => {
+    playDoneSound();
+  }, 100);
+
+  // Mark notified and save
+  event.notified = true;
+  saveCalendarEvents(events);
+}
+
+window.closeEventNotificationPopup = () => {
+  const popup = document.getElementById('eventNotificationPopup');
+  if (popup) {
+    popup.remove();
+    triggerHapticImpact();
+  }
 };
 
 /* ═══════════════ INITIALIZATION ═══════════════ */
@@ -328,12 +395,18 @@ function init() {
   // Render agenda
   renderAgenda();
 
+  // Render events calendar
+  renderEvents();
+
   // Initialize and update day highlight (strictly automatic system date for Tasks slide)
   updateDayHighlight();
 
-  // Hide inactive slide initially to prevent extra scrolling height
+  // Hide inactive slides initially to prevent extra scrolling height
   const slideAgenda = document.getElementById('slideAgenda');
   if (slideAgenda) slideAgenda.classList.add('inactive-slide');
+
+  const slideEvents = document.getElementById('slideEvents');
+  if (slideEvents) slideEvents.classList.add('inactive-slide');
 
   // Setup swipe listeners
   const viewport = document.querySelector('.app-viewport');
@@ -357,6 +430,9 @@ function init() {
       updateProgress(TASKS);
     }
   });
+
+  // Check for upcoming event notifications
+  checkEventNotifications();
 }
 
 // Start

@@ -15,7 +15,9 @@ import {
   loadSchoolAgenda,
   saveSchoolAgenda,
   loadPackedBooks,
-  savePackedBooks
+  savePackedBooks,
+  loadCalendarEvents,
+  saveCalendarEvents
 } from './storage.js';
 
 describe('Storage Service Tests', () => {
@@ -104,5 +106,20 @@ describe('Storage Service Tests', () => {
     
     savePackedBooks([]);
     expect(loadPackedBooks()).toEqual([]);
+  });
+
+  it('should manage calendar events', () => {
+    // Should load defaults if empty
+    const list = loadCalendarEvents();
+    expect(list).toBeInstanceOf(Array);
+    expect(list.length).toBe(2);
+    expect(list[0]).toHaveProperty('title');
+    expect(list[0]).toHaveProperty('date');
+
+    const customEvents = [
+      { id: '1', title: 'Festa de aniversário 🥳', date: '2026-06-15', type: 'party', notified: false }
+    ];
+    saveCalendarEvents(customEvents);
+    expect(loadCalendarEvents()).toEqual(customEvents);
   });
 });

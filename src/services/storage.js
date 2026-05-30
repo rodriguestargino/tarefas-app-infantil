@@ -8,6 +8,7 @@ const LS_TASKS_LIST = 'tarefas_custom_list';
 const LS_CHILD_NAME = 'tarefas_child_name';
 const LS_AGENDA       = 'tarefas_school_agenda';
 const LS_PACKED_BOOKS = 'tarefas_packed_books';
+const LS_EVENTS       = 'tarefas_events_calendar';
 
 export const store = (() => {
   const mem = {};
@@ -152,4 +153,45 @@ export function savePackedBooks(books) {
 
 export function resetPackedBooks() {
   savePackedBooks([]);
+}
+
+function getOffsetDateStr(offsetDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const DEFAULT_EVENTS = [
+  {
+    id: 'default-exam',
+    title: 'Prova de Ciências 🧪',
+    date: getOffsetDateStr(2),
+    type: 'exam',
+    notified: false
+  },
+  {
+    id: 'default-party',
+    title: 'Aniversário da Ana 🎂',
+    date: getOffsetDateStr(5),
+    type: 'party',
+    notified: false
+  }
+];
+
+export function loadCalendarEvents() {
+  try {
+    const raw = store.get(LS_EVENTS);
+    return raw ? JSON.parse(raw) : DEFAULT_EVENTS;
+  } catch (e) {
+    return DEFAULT_EVENTS;
+  }
+}
+
+export function saveCalendarEvents(events) {
+  try {
+    store.set(LS_EVENTS, JSON.stringify(events));
+  } catch (e) {}
 }
