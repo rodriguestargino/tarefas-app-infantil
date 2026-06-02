@@ -131,7 +131,13 @@ export function clearTimerState() {
 }
 
 export function getChildName() {
-  return store.get(LS_CHILD_NAME) || 'Supercriança!';
+  const raw = store.get(LS_CHILD_NAME);
+  if (!raw) return 'Supercriança!';
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === 'string') return parsed;
+  } catch (e) {}
+  return raw;
 }
 
 export function setChildName(name) {
