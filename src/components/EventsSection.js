@@ -50,6 +50,11 @@ export function renderEvents() {
   const formTitle = editingEventId ? '✏️ Editar Data Especial' : '✏️ Cadastrar Data Especial';
   const saveBtnText = editingEventId ? 'Salvar Alterações 💾' : 'Salvar 💾';
 
+  const now = new Date();
+  const months = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+  const currentMonth = months[now.getMonth()];
+  const currentDay = String(now.getDate()).padStart(2, '0');
+
   let html = `
     <div class="container">
       <!-- Top Navigation Bar -->
@@ -61,7 +66,12 @@ export function renderEvents() {
 
       <!-- Header -->
       <div class="header" style="margin-bottom: 18px;">
-        <span class="sun-icon">📅</span>
+        <div style="display: inline-block; margin-bottom: 12px; filter: drop-shadow(0 6px 12px rgba(197, 163, 255, 0.4));">
+          <div style="width: 80px; height: 85px; background: white; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; border: 4px solid #C5A3FF; box-shadow: inset 0 -4px 0 rgba(0,0,0,0.05); transform: rotate(-5deg);">
+            <div style="background: #C5A3FF; color: white; font-size: 1.1rem; font-weight: 900; text-align: center; padding: 2px 0; letter-spacing: 1px;">${currentMonth}</div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #7048E8; font-size: 2.8rem; font-weight: 900; line-height: 1;">${currentDay}</div>
+          </div>
+        </div>
         <div class="title-box" style="background: linear-gradient(135deg, #C5A3FF, #FF9DC1, #FFD166)">
           <h1>✨ Provas e Festas! ✨</h1>
           <div class="subtitle">Não perca nenhuma data especial! 🎈</div>
