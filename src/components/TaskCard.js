@@ -21,13 +21,15 @@ export function renderTasks(tasks, doneSaved, onToggleDone, onOpenTimer, onSwapC
 
     card.innerHTML = `
       <div class="grip"><span></span><span></span><span></span></div>
-      <div class="task-emoji">${t.emoji}</div>
-      <div class="task-info">
-        <div class="task-name">${t.name}</div>
+      <div class="task-emoji-col">
+        <div class="task-emoji">${t.emoji}</div>
         <div class="task-time">⏰ ${t.timeLabel}</div>
       </div>
-      <div class="card-right">
+      <div class="task-info">
+        <div class="task-name">${t.name}</div>
         ${t.duration ? `<button class="timer-start-btn" data-tid="${t.id}">⏱️ Iniciar</button>` : ''}
+      </div>
+      <div class="card-right">
         <div class="check-circle">
           <span class="check-icon">✓</span>
         </div>
