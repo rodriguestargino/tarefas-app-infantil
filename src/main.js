@@ -14,7 +14,8 @@ import {
   saveStarBalance,
   loadRewardsList,
   loadRedemptionRequests,
-  saveRedemptionRequests
+  saveRedemptionRequests,
+  processPastDaysStars
 } from './services/storage.js';
 import { triggerHapticImpact, triggerHapticSuccess } from './services/haptics.js';
 import { renderAgenda, getSelectedDayIdx, setSelectedDayIdx } from './components/AgendaSection.js';
@@ -61,10 +62,8 @@ function toggleDone(e, card) {
   
   if (!wasDone) {
     triggerHapticSuccess();
-    saveStarBalance(loadStarBalance() + 1);
   } else {
     triggerHapticImpact();
-    saveStarBalance(Math.max(0, loadStarBalance() - 1));
   }
   
   window.renderRewardsShopShelf();
@@ -81,7 +80,6 @@ function handleOpenTimer(e, btn) {
         const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
         saveDone(ids);
         updateProgress(TASKS);
-        saveStarBalance(loadStarBalance() + 1);
         window.renderRewardsShopShelf();
       }
     }
@@ -176,7 +174,6 @@ window.finishTimer = () => {
         const ids = [...grid.querySelectorAll('.task-card.done')].map(c => parseInt(c.dataset.id));
         saveDone(ids);
         updateProgress(TASKS);
-        saveStarBalance(loadStarBalance() + 1);
         window.renderRewardsShopShelf();
       }
     }
@@ -248,6 +245,9 @@ function checkDateChange() {
     
     // Reset manual override on date transition
     setSelectedDayIdx(null);
+    
+    // Process stars from yesterday before wiping the tasks
+    processPastDaysStars();
     
     // Automatically reset tasks
     grid.querySelectorAll('.task-card').forEach(c => c.classList.remove('done'));
@@ -502,6 +502,9 @@ window.clearApprovedRedemption = (reqId) => {
 
 /* ═══════════════ INITIALIZATION ═══════════════ */
 async function init() {
+  // Process any stars pending from previous days before loading the UI
+  processPastDaysStars();
+
   // Warm up audio context on first user interaction
   document.addEventListener('pointerdown', () => {
     warmUpAudio();

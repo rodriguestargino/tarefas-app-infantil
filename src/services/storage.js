@@ -91,6 +91,29 @@ export function saveDone(ids) {
   } catch {}
 }
 
+export function processPastDaysStars() {
+  try {
+    const savedDate = store.get(LS_DATE);
+    const today = todayStr();
+    
+    if (savedDate && savedDate !== today) {
+      const rawDone = store.get(LS_DONE);
+      if (rawDone) {
+        const doneList = JSON.parse(rawDone);
+        if (Array.isArray(doneList) && doneList.length > 0) {
+          const currentBal = loadStarBalance();
+          saveStarBalance(currentBal + doneList.length);
+        }
+      }
+      store.set(LS_DATE, today);
+      store.set(LS_DONE, JSON.stringify([]));
+      syncLocalToCloud('done', []);
+    }
+  } catch (e) {
+    console.error('Error processing past stars:', e);
+  }
+}
+
 export function saveTimerState(state) {
   if (state === null) { store.del(LS_TIMER); return; }
   store.set(LS_TIMER, JSON.stringify(state));
