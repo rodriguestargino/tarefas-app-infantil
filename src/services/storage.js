@@ -144,25 +144,39 @@ export function saveSchoolAgenda(agenda) {
 
 export function loadPackedBooks() {
   try {
-    const date = store.get(LS_DATE);
-    if (date !== todayStr()) return [];
     const raw = store.get(LS_PACKED_BOOKS);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const d = new Date();
+      const todayIdx = d.getDay() === 0 ? 6 : d.getDay() - 1;
+      return { [todayIdx]: parsed };
+    }
+    return parsed || {};
   } catch {
-    return [];
+    return {};
   }
 }
 
-export function savePackedBooks(books) {
+export function savePackedBooks(booksDict) {
   try {
-    store.set(LS_PACKED_BOOKS, JSON.stringify(books));
+    store.set(LS_PACKED_BOOKS, JSON.stringify(booksDict));
     store.set(LS_DATE, todayStr());
-    syncLocalToCloud('packed_books', books);
+    syncLocalToCloud('packed_books', booksDict);
   } catch {}
 }
 
-export function resetPackedBooks() {
-  savePackedBooks([]);
+export function cleanOldPackedBooks() {
+  try {
+    const dict = loadPackedBooks();
+    const d = new Date();
+    const todayIdx = d.getDay() === 0 ? 6 : d.getDay() - 1;
+    const tomorrowIdx = (todayIdx + 1) % 7;
+    const newDict = {};
+    if (dict[todayIdx]) newDict[todayIdx] = dict[todayIdx];
+    if (dict[tomorrowIdx]) newDict[tomorrowIdx] = dict[tomorrowIdx];
+    savePackedBooks(newDict);
+  } catch(e){}
 }
 
 function getOffsetDateStr(offsetDays) {

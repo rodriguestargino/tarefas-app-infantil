@@ -55,8 +55,9 @@ export function renderAgenda() {
   const booksArray = todayData.books || [];
 
   // Calculate progress
+  const packedForDay = packedItems[dayIdx] || [];
   const totalBooks = booksArray.length;
-  const packedCount = booksArray.filter(b => packedItems.includes(b)).length;
+  const packedCount = booksArray.filter(b => packedForDay.includes(b)).length;
   const progressPct = totalBooks > 0 ? Math.round((packedCount / totalBooks) * 100) : 0;
 
   // Build the complete HTML
@@ -123,7 +124,7 @@ export function renderAgenda() {
                 <div class="backpack-items-list">
                   ${
                     booksArray.map((book, index) => {
-                      const isPacked = packedItems.includes(book);
+                      const isPacked = packedForDay.includes(book);
                       return `
                         <div class="backpack-item ${isPacked ? 'packed' : ''}" onclick="window.toggleBackpackItem('${book.replace(/'/g, "\\'")}')">
                           <div class="backpack-checkbox">${isPacked ? '✓' : '🎒'}</div>
@@ -197,20 +198,21 @@ export function renderAgenda() {
 
 export function togglePackedItem(itemName) {
   packedItems = loadPackedBooks();
-  const wasPacked = packedItems.includes(itemName);
+  const dayIdx = getSelectedDayIdx();
+  const packedForDay = packedItems[dayIdx] || [];
+  const wasPacked = packedForDay.includes(itemName);
 
   if (wasPacked) {
-    packedItems = packedItems.filter(item => item !== itemName);
+    packedItems[dayIdx] = packedForDay.filter(item => item !== itemName);
     triggerHapticImpact();
     playTick();
   } else {
-    packedItems.push(itemName);
+    packedItems[dayIdx] = [...packedForDay, itemName];
     triggerHapticSuccess();
     
     // Check if everything is packed today to play big sound
-    const dayIdx = getSelectedDayIdx();
     const booksArray = agenda[dayIdx]?.books || [];
-    const isAllPackedNow = booksArray.every(b => packedItems.includes(b));
+    const isAllPackedNow = booksArray.every(b => packedItems[dayIdx].includes(b));
     
     if (isAllPackedNow) {
       playDoneSound();

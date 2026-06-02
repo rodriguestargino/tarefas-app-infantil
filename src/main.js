@@ -7,7 +7,7 @@ import {
   loadDone,
   saveDone,
   todayStr,
-  resetPackedBooks,
+  cleanOldPackedBooks,
   loadCalendarEvents,
   saveCalendarEvents,
   loadStarBalance,
@@ -235,7 +235,6 @@ function updateDayHighlight() {
 
 window.setAgendaSelectedDay = (idx) => {
   setSelectedDayIdx(idx);
-  resetPackedBooks();
   renderAgenda();
   triggerHapticImpact();
   const dayNames = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
@@ -253,7 +252,7 @@ function checkDateChange() {
     // Automatically reset tasks
     grid.querySelectorAll('.task-card').forEach(c => c.classList.remove('done'));
     saveDone([]);
-    resetPackedBooks();
+    cleanOldPackedBooks();
     updateProgress(TASKS);
     stopTimer(true);
     
