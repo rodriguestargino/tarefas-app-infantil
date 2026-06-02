@@ -107,11 +107,11 @@ describe('Storage Service Tests', () => {
   });
 
   it('should manage daily packed books in mochila', () => {
-    savePackedBooks(['Estojo', 'Livro de Geografia']);
-    expect(loadPackedBooks()).toEqual(['Estojo', 'Livro de Geografia']);
+    savePackedBooks({ 1: ['Estojo', 'Livro de Geografia'] });
+    expect(loadPackedBooks()).toEqual({ 1: ['Estojo', 'Livro de Geografia'] });
     
-    savePackedBooks([]);
-    expect(loadPackedBooks()).toEqual([]);
+    savePackedBooks({});
+    expect(loadPackedBooks()).toEqual({});
   });
 
   it('should manage calendar events', () => {
