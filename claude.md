@@ -131,6 +131,8 @@ npx cap open android  # Abre no Android Studio
 8. **Toast notifications** — usar `showToast('mensagem')` para feedback visual breve.
 9. **Testes** — colocados junto aos arquivos fonte com sufixo `.test.js` (ex: `ProgressSection.test.js`).
 10. **CSS modular** — estilos separados por domínio em `src/styles/` e importados via `src/style.css`.
+11. **Reportes Concisos** — Ao finalizar uma tarefa, o assistente (IA) deve responder de forma extremamente concisa, informando apenas os pontos principais (ex: "Done", "Success", "Implemented"). Nenhuma explicação detalhada deve ser dada a menos que o usuário solicite explicitamente.
+12. **Commits** — As mensagens de commit devem ser escritas sempre em inglês e seguir o padrão *Conventional Commits* (ex: `feat(scope): message`, `fix(scope): message`, `style: message`, `refactor: message`).
 
 ---
 
