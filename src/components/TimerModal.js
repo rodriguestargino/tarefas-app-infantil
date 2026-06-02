@@ -1,7 +1,7 @@
 import { triggerHapticImpact, triggerHapticSuccess } from '../services/haptics.js';
 import { playTick, playDoneSound } from '../services/audio.js';
 import { saveTimerState, clearTimerState, loadTimerState } from '../services/storage.js';
-
+import { LocalNotifications } from '@capacitor/local-notifications';
 let timerInterval  = null;
 let timerRemaining = 0;
 let timerTotal     = 0;
@@ -9,6 +9,44 @@ let timerPaused    = false;
 let activeCard     = null;
 let activeTimerBtn = null;
 let activeTaskId   = null;
+let activeTaskName = null;
+
+async function scheduleTimerNotification(remainingSeconds) {
+  if (!activeTaskName) return;
+  try {
+    let permStatus = await LocalNotifications.checkPermissions();
+    if (permStatus.display !== 'granted') {
+      permStatus = await LocalNotifications.requestPermissions();
+    }
+    if (permStatus.display !== 'granted') return;
+
+    await cancelTimerNotification();
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title: "Tempo Esgotado! ⏰",
+          body: `A atividade "${activeTaskName}" terminou!`,
+          id: 1000,
+          schedule: { at: new Date(Date.now() + remainingSeconds * 1000) },
+          sound: null,
+          actionTypeId: "",
+          extra: null
+        }
+      ]
+    });
+  } catch (e) {
+    console.error("LocalNotifications schedule error:", e);
+  }
+}
+
+async function cancelTimerNotification() {
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id: 1000 }] });
+  } catch (e) {
+    console.error("LocalNotifications cancel error:", e);
+  }
+}
 
 export function getActiveTaskId() {
   return activeTaskId;
@@ -71,7 +109,10 @@ export function openTimer(e, btn, tasks, onTimerFinished) {
 
   if (activeTaskId === task.id && timerRemaining > 0) {
     renderTimerModal(task, timerPaused);
-    if (!timerPaused) startCountdown(tasks, onTimerFinished);
+    if (!timerPaused) {
+      startCountdown(tasks, onTimerFinished);
+      scheduleTimerNotification(timerRemaining);
+    }
     updateTimerButtons();
     return;
   }
@@ -83,6 +124,7 @@ export function openTimer(e, btn, tasks, onTimerFinished) {
   activeCard     = card;
   activeTimerBtn = btn;
   activeTaskId   = task.id;
+  activeTaskName = task.name;
   timerTotal     = task.duration;
   timerRemaining = task.duration;
   timerPaused    = false;
@@ -90,6 +132,7 @@ export function openTimer(e, btn, tasks, onTimerFinished) {
   renderTimerModal(task, false);
   saveCurrentTimerState();
   startCountdown(tasks, onTimerFinished);
+  scheduleTimerNotification(timerRemaining);
   updateTimerButtons();
 }
 
@@ -129,13 +172,17 @@ export function restoreTimer(tasks, onTimerFinished) {
     }
 
     activeTaskId   = task.id;
+    activeTaskName = task.name;
     timerTotal     = saved.total;
     timerRemaining = remaining;
     timerPaused    = saved.paused;
     activeCard     = document.querySelector(`.task-card[data-id="${task.id}"]`);
 
     renderTimerModal(task, saved.paused);
-    if (!saved.paused) startCountdown(tasks, onTimerFinished);
+    if (!saved.paused) {
+      startCountdown(tasks, onTimerFinished);
+      scheduleTimerNotification(remaining);
+    }
     updateTimerButtons();
 
     const elapsedMin = Math.floor(elapsed / 60);
@@ -179,13 +226,19 @@ export function pauseTimer() {
   if (timerLabelEl) timerLabelEl.textContent = timerPaused ? '⏸ pausado' : 'em andamento...';
   setSandVisible(!timerPaused);
   saveCurrentTimerState();
+  if (timerPaused) {
+    cancelTimerNotification();
+  } else {
+    scheduleTimerNotification(timerRemaining);
+  }
   updateTimerButtons();
   triggerHapticImpact();
 }
 
 export function stopTimer(close = true) {
   if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  timerPaused = false; activeCard = null; activeTaskId = null;
+  timerPaused = false; activeCard = null; activeTaskId = null; activeTaskName = null;
+  cancelTimerNotification();
   setSandVisible(false);
   clearTimerState();
   updateTimerButtons();
@@ -197,6 +250,7 @@ export function stopTimer(close = true) {
 function timerDone(tasks, onTimerFinished) {
   playDoneSound(); updateHourglass(0);
   triggerHapticSuccess();
+  cancelTimerNotification();
   const timerBtnsEl = document.getElementById('timerBtns');
   const timerDoneMsgEl = document.getElementById('timerDoneMsg');
   const timerLabelEl = document.getElementById('timerLabel');
@@ -228,7 +282,9 @@ export function finishTimer(onDoneMarked) {
     if (onDoneMarked) onDoneMarked(activeTaskId);
   }
   activeTaskId = null;
+  activeTaskName = null;
   triggerHapticSuccess();
+  cancelTimerNotification();
   stopTimer(true);
 }
 
