@@ -58,6 +58,7 @@ tarefas-app/
 │       ├── animations.css   # Keyframes (nuvens, estrelas, confetes)
 │       └── agenda.css       # Estilos das telas Agenda e Eventos
 ├── assets/                  # Ícones e splash screens originais para o Capacitor
+├── icon_designs/            # Imagens originais e assets de design guardados para alterações futuras
 └── android/                 # Projeto nativo Android (gerado pelo Capacitor)
 ```
 
@@ -134,7 +135,7 @@ npx capacitor-assets generate --android  # Gera ícones e splash screens nativos
 9. **Testes** — colocados junto aos arquivos fonte com sufixo `.test.js` (ex: `ProgressSection.test.js`).
 10. **CSS modular** — estilos separados por domínio em `src/styles/` e importados via `src/style.css`.
 11. **Reportes Concisos** — Ao finalizar uma tarefa, o assistente (IA) deve responder de forma extremamente concisa, informando apenas os pontos principais (ex: "Done", "Success", "Implemented"). Nenhuma explicação detalhada deve ser dada a menos que o usuário solicite explicitamente.
-12. **Commits** — As mensagens de commit devem ser escritas sempre em inglês e seguir o padrão *Conventional Commits* (ex: `feat(scope): message`, `fix(scope): message`, `style: message`, `refactor: message`).
+12. **Commits** — As mensagens de commit devem obrigatoriamente seguir o padrão do git (*Conventional Commits*) com prefixos como `chore`, `feat`, `fix`, etc. Exemplos: `chore: update folder structure`, `feat: add new icon`, `fix: header alignment`.
 13. **Versionamento** — Sempre que um novo APK for gerado, a versão do app deve ser incrementada em `package.json` e `android/app/build.gradle` (`versionCode` e `versionName`).
 
 ---
