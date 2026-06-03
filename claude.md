@@ -136,7 +136,7 @@ npx capacitor-assets generate --android  # Gera ícones e splash screens nativos
 10. **CSS modular** — estilos separados por domínio em `src/styles/` e importados via `src/style.css`.
 11. **Reportes Concisos** — Ao finalizar uma tarefa, o assistente (IA) deve responder de forma extremamente concisa, informando apenas os pontos principais (ex: "Done", "Success", "Implemented"). Nenhuma explicação detalhada deve ser dada a menos que o usuário solicite explicitamente.
 12. **Commits** — As mensagens de commit devem obrigatoriamente seguir o padrão do git (*Conventional Commits*) com prefixos como `chore`, `feat`, `fix`, etc. Exemplos: `chore: update folder structure`, `feat: add new icon`, `fix: header alignment`.
-13. **Versionamento** — Sempre que um novo APK for gerado, a versão do app deve ser incrementada em `package.json` e `android/app/build.gradle` (`versionCode` e `versionName`).
+13. **Versionamento** — SEMPRE que for solicitada a geração de um novo build ou APK, a versão do app DEVE OBRIGATORIAMENTE ser incrementada ANTES do build em `package.json` e `android/app/build.gradle` (`versionCode` e `versionName`). O assistente deve sempre verificar se a versão foi incrementada.
 
 ---
 
