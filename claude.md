@@ -57,6 +57,7 @@ tarefas-app/
 │       ├── components.css   # Estilos de cards, modais, botões, progresso
 │       ├── animations.css   # Keyframes (nuvens, estrelas, confetes)
 │       └── agenda.css       # Estilos das telas Agenda e Eventos
+├── assets/                  # Ícones e splash screens originais para o Capacitor
 └── android/                 # Projeto nativo Android (gerado pelo Capacitor)
 ```
 
@@ -115,6 +116,7 @@ npm run preview  # Preview do build de produção
 npm run test     # Roda testes com Vitest
 npx cap sync android  # Sincroniza build web com projeto Android
 npx cap open android  # Abre no Android Studio
+npx capacitor-assets generate --android  # Gera ícones e splash screens nativos a partir da pasta assets/
 ```
 
 ---
