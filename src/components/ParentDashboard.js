@@ -153,7 +153,8 @@ function renderReports(container) {
   const taskCompletionPct   = totalTasksCount > 0
     ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
 
-  const booksPackedCount   = packedBooks.length;
+  const packedForDay        = packedBooks[dayIdx] || [];
+  const booksPackedCount    = todayBooks.filter(b => packedForDay.includes(b)).length;
   const totalBooksCount    = todayBooks.length;
   const booksCompletionPct = totalBooksCount > 0
     ? Math.round((booksPackedCount / totalBooksCount) * 100) : 0;
