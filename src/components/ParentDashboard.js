@@ -513,8 +513,8 @@ function renderSupport(container) {
           Este aplicativo é direcionado para famílias e crianças. Respeitamos a privacidade e estamos em conformidade com as diretrizes da Google Play Store (políticas de Famílias) e legislações vigentes.
         </p>
         <div style="display:flex; gap:10px;">
-          <a href="https://rodriguestargino.github.io/politica-privacidade.html" target="_blank" class="legal-link" style="color:#74C0FC; text-decoration:none; font-weight:700; font-size:0.85rem;">🔒 Política de Privacidade</a>
-          <a href="https://rodriguestargino.github.io/termos-uso.html" target="_blank" class="legal-link" style="color:#74C0FC; text-decoration:none; font-weight:700; font-size:0.85rem;">📄 Termos de Uso</a>
+          <a href="https://seu-site.github.io/politica-privacidade.html" target="_blank" class="legal-link" style="color:#74C0FC; text-decoration:none; font-weight:700; font-size:0.85rem;">🔒 Política de Privacidade</a>
+          <a href="https://seu-site.github.io/termos-uso.html" target="_blank" class="legal-link" style="color:#74C0FC; text-decoration:none; font-weight:700; font-size:0.85rem;">📄 Termos de Uso</a>
         </div>
       </div>
 
