@@ -832,26 +832,53 @@ Informações do Aparelho (Diagnóstico):
 - User Agent: ${userAgent}`;
 
   const emailDest = "support@rodriguestargino.atlassian.net";
-  const emailServiceUrl = import.meta.env.VITE_EMAIL_SERVICE_URL || "https://api.rodriguestargino.com/send-email";
+  const web3FormsKey = import.meta.env.VITE_WEB3FORMS_KEY;
+  const emailServiceUrl = import.meta.env.VITE_EMAIL_SERVICE_URL;
 
   try {
-    const payload = {
-      to: emailDest,
-      replyTo: email,
-      reply_to: email, // Fallback key format
-      subject: `Suporte: ${subject}`,
-      body: body
-    };
+    let response;
 
-    const response = await fetch(emailServiceUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+    // If Web3Forms key is configured, use it as the easiest silent integration
+    if (web3FormsKey) {
+      const payload = {
+        access_key: web3FormsKey,
+        name: name,
+        email: email, // User's email
+        replyto: email, // Sets the Reply-To header so Jira replies directly to the parent
+        subject: `Suporte: ${subject}`,
+        message: body,
+        from_name: `${name} (Via App Infantil)`
+      };
 
-    if (response.ok) {
+      response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      // Fallback to custom email service URL if defined
+      const serviceUrl = emailServiceUrl || "https://api.rodriguestargino.com/send-email";
+      const payload = {
+        to: emailDest,
+        replyTo: email,
+        reply_to: email,
+        subject: `Suporte: ${subject}`,
+        body: body
+      };
+
+      response = await fetch(serviceUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (response && response.ok) {
       triggerHapticSuccess();
       showToast('📬 Ticket enviado com sucesso! 🚀');
       
@@ -871,15 +898,14 @@ Informações do Aparelho (Diagnóstico):
         closeParentDashboard();
       }, 1500);
     } else {
-      throw new Error(`Server returned status: ${response.status}`);
+      throw new Error(`Failed to send. Status: ${response ? response.status : 'No response'}`);
     }
   } catch (err) {
     console.error('Erro ao enviar ticket:', err);
     triggerHapticImpact();
     
-    // In development mode without real service configured, show a visual warning helper
-    if (!import.meta.env.VITE_EMAIL_SERVICE_URL) {
-      alert(`[Modo de Desenvolvimento] Falha ao conectar ao serviço de e-mail mockado:\n${emailServiceUrl}\n\nConfigure a variável VITE_EMAIL_SERVICE_URL no seu arquivo .env com a URL do seu microserviço de e-mail para habilitar o envio silencioso real!`);
+    if (!web3FormsKey && !emailServiceUrl) {
+      alert(`[Configuração Necessária] Insira sua chave gratuita do Web3Forms no arquivo .env:\n\nVITE_WEB3FORMS_KEY=sua_chave\n\nIsso permitirá o envio do chamado silenciosamente direto para seu e-mail do Jira!`);
     } else {
       alert('Erro ao enviar o ticket silenciosamente. Por favor, verifique sua conexão de internet e tente novamente.');
     }
