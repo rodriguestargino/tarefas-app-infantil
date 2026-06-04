@@ -783,7 +783,7 @@ window.toggleFaqAnswer = (idx) => {
   triggerHapticImpact();
 };
 
-window.sendSupportTicket = () => {
+window.sendSupportTicket = async () => {
   const name = document.getElementById('supportNameInput')?.value.trim();
   const email = document.getElementById('supportEmailInput')?.value.trim();
   const subject = document.getElementById('supportSubjectInput')?.value;
@@ -797,6 +797,15 @@ window.sendSupportTicket = () => {
   if (!email.includes('@')) {
     alert('Por favor, digite um e-mail válido! ✉️');
     return;
+  }
+
+  // Get the submit button and show loading state
+  const submitBtn = document.querySelector('.support-form-box button');
+  const originalBtnText = submitBtn ? submitBtn.textContent : 'Enviar Ticket de Suporte 🚀';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando chamado... ⏳';
+    submitBtn.style.opacity = '0.7';
   }
 
   const appVersion = "1.0.4";
@@ -822,15 +831,65 @@ Informações do Aparelho (Diagnóstico):
 - Versão do App: v${appVersion}
 - User Agent: ${userAgent}`;
 
-  const emailDest = "suporte@rodriguestargino.atlassian.net";
-  const mailtoUrl = `mailto:${emailDest}?subject=${encodeURIComponent(`[Suporte JSM] ${subject}`)}&body=${encodeURIComponent(body)}`;
+  const emailDest = "support@rodriguestargino.atlassian.net";
+  const emailServiceUrl = import.meta.env.VITE_EMAIL_SERVICE_URL || "https://api.rodriguestargino.com/send-email";
 
-  triggerHapticSuccess();
-  window.open(mailtoUrl, '_self');
-  showToast('📬 Abrindo aplicativo de e-mail...');
+  try {
+    const payload = {
+      to: emailDest,
+      replyTo: email,
+      reply_to: email, // Fallback key format
+      subject: `Suporte: ${subject}`,
+      body: body
+    };
 
-  const msgInput = document.getElementById('supportMessageInput');
-  if (msgInput) msgInput.value = '';
+    const response = await fetch(emailServiceUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      triggerHapticSuccess();
+      showToast('📬 Ticket enviado com sucesso! 🚀');
+      
+      // Clear inputs
+      const msgInput = document.getElementById('supportMessageInput');
+      if (msgInput) msgInput.value = '';
+      
+      const nameInput = document.getElementById('supportNameInput');
+      const emailInput = document.getElementById('supportEmailInput');
+      const subjectInput = document.getElementById('supportSubjectInput');
+      if (nameInput) nameInput.value = '';
+      if (emailInput) emailInput.value = '';
+      if (subjectInput) subjectInput.value = '';
+      
+      // Close parent dashboard after a brief delay
+      setTimeout(() => {
+        closeParentDashboard();
+      }, 1500);
+    } else {
+      throw new Error(`Server returned status: ${response.status}`);
+    }
+  } catch (err) {
+    console.error('Erro ao enviar ticket:', err);
+    triggerHapticImpact();
+    
+    // In development mode without real service configured, show a visual warning helper
+    if (!import.meta.env.VITE_EMAIL_SERVICE_URL) {
+      alert(`[Modo de Desenvolvimento] Falha ao conectar ao serviço de e-mail mockado:\n${emailServiceUrl}\n\nConfigure a variável VITE_EMAIL_SERVICE_URL no seu arquivo .env com a URL do seu microserviço de e-mail para habilitar o envio silencioso real!`);
+    } else {
+      alert('Erro ao enviar o ticket silenciosamente. Por favor, verifique sua conexão de internet e tente novamente.');
+    }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText;
+      submitBtn.style.opacity = '1';
+    }
+  }
 };
 
 // ─── Public window bindings ───────────────────────────────────────────────────
