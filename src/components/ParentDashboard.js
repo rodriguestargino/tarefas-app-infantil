@@ -834,12 +834,57 @@ Informações do Aparelho (Diagnóstico):
   const emailDest = "support@rodriguestargino.atlassian.net";
   const web3FormsKey = import.meta.env.VITE_WEB3FORMS_KEY;
   const emailServiceUrl = import.meta.env.VITE_EMAIL_SERVICE_URL;
+  const jiraEmail = import.meta.env.VITE_JIRA_USER_EMAIL;
+  const jiraToken = import.meta.env.VITE_JIRA_API_TOKEN;
 
   try {
     let response;
 
-    // If Web3Forms key is configured, use it as the easiest silent integration
-    if (web3FormsKey) {
+    // If Jira API Token is configured, make a direct call (Option 1)
+    if (jiraToken && jiraEmail) {
+      const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const baseUrl = isDev ? '/api/jira' : 'https://rodriguestargino.atlassian.net';
+      
+      const authHeader = 'Basic ' + btoa(`${jiraEmail}:${jiraToken}`);
+
+      const payload = {
+        fields: {
+          project: {
+            key: "SUP"
+          },
+          summary: `Suporte [${subject}]: ${name}`,
+          description: {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: body
+                  }
+                ]
+              }
+            ]
+          },
+          issuetype: {
+            id: "10076" // Task
+          }
+        }
+      };
+
+      response = await fetch(`${baseUrl}/rest/api/3/issue`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": authHeader,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+    } else if (web3FormsKey) {
+      // If Web3Forms key is configured, use it as the easiest silent integration
       const payload = {
         access_key: web3FormsKey,
         name: name,
@@ -904,10 +949,10 @@ Informações do Aparelho (Diagnóstico):
     console.error('Erro ao enviar ticket:', err);
     triggerHapticImpact();
     
-    if (!web3FormsKey && !emailServiceUrl) {
-      alert(`[Configuração Necessária] Insira sua chave gratuita do Web3Forms no arquivo .env:\n\nVITE_WEB3FORMS_KEY=sua_chave\n\nIsso permitirá o envio do chamado silenciosamente direto para seu e-mail do Jira!`);
+    if (!jiraToken && !web3FormsKey && !emailServiceUrl) {
+      alert(`[Configuração Necessária] Insira as variáveis de ambiente necessárias (como VITE_JIRA_API_TOKEN e VITE_JIRA_USER_EMAIL) no arquivo .env para habilitar o envio direto para o Jira!`);
     } else {
-      alert('Erro ao enviar o ticket silenciosamente. Por favor, verifique sua conexão de internet e tente novamente.');
+      alert('Erro ao enviar o ticket. Por favor, verifique suas credenciais e conexão de internet e tente novamente.');
     }
   } finally {
     if (submitBtn) {
