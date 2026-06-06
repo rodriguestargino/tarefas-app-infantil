@@ -1,5 +1,5 @@
 // ─── Supabase Edge Function: suporte-jira ────────────────────────────────────
-// Cria um ticket (Issue) no Jira Cloud a partir do formulário de suporte do app.
+// Cria um ticket no Jira Service Management a partir do formulário de suporte do app.
 // Secrets necessários (configurar via `supabase secrets set`):
 //   JIRA_DOMAIN, JIRA_EMAIL, JIRA_API_TOKEN
 
@@ -21,79 +21,28 @@ function jsonResponse(body: Record<string, unknown>, status: number): Response {
   })
 }
 
-/** Monta a description do ticket no formato ADF (Atlassian Document Format) */
-function buildAdfDescription(
+/** Monta a description do ticket usando Jira Wiki Markup (String format) */
+function buildDescriptionText(
   emailCliente: string,
   tipoDuvida: string,
   descricao: string,
   diagnostico: string,
-) {
-  return {
-    type: 'doc',
-    version: 1,
-    content: [
-      // ── Cabeçalho: Informações do Contato ──
-      {
-        type: 'heading',
-        attrs: { level: 3 },
-        content: [{ type: 'text', text: '📧 Informações do Contato' }],
-      },
-      {
-        type: 'paragraph',
-        content: [
-          { type: 'text', text: 'E-mail: ', marks: [{ type: 'strong' }] },
-          { type: 'text', text: emailCliente },
-        ],
-      },
-      {
-        type: 'paragraph',
-        content: [
-          { type: 'text', text: 'Tipo de Solicitação: ', marks: [{ type: 'strong' }] },
-          { type: 'text', text: tipoDuvida },
-        ],
-      },
+): string {
+  return `h3. 📧 Informações do Contato
+*E-mail:* ${emailCliente}
+*Tipo de Solicitação:* ${tipoDuvida}
 
-      // ── Separador ──
-      { type: 'rule' },
+----
 
-      // ── Mensagem do Usuário ──
-      {
-        type: 'heading',
-        attrs: { level: 3 },
-        content: [{ type: 'text', text: '💬 Mensagem do Usuário' }],
-      },
-      {
-        type: 'paragraph',
-        content: [{ type: 'text', text: descricao }],
-      },
+h3. 💬 Mensagem do Usuário
+${descricao}
 
-      // ── Separador ──
-      { type: 'rule' },
+----
 
-      // ── Dados Técnicos de Diagnóstico ──
-      {
-        type: 'heading',
-        attrs: { level: 3 },
-        content: [{ type: 'text', text: '🔧 Informações de Diagnóstico' }],
-      },
-      {
-        type: 'panel',
-        attrs: { panelType: 'info' },
-        content: [
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: diagnostico,
-                marks: [{ type: 'code' }],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  }
+h3. 🔧 Informações de Diagnóstico
+{code}
+${diagnostico}
+{code}`;
 }
 
 // ─── Main Handler ────────────────────────────────────────────────────────────
@@ -139,31 +88,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const credentials = btoa(`${jiraEmail}:${jiraToken}`)
 
-    // ── 4. Montagem do payload Jira (ADF) ────────────────────────────────────
+    // ── 4. Montagem do payload Jira Service Management (JSM) ─────────────────
 
     const jiraPayload = {
-      fields: {
-        project: {
-          // ⚠️ SUBSTITUA AQUI PELA KEY DO SEU PROJETO JIRA (Ex: "SUP", "RAFA", "TAR")
-          key: 'SUP',
-        },
+      // Confirmado diretamente no seu Jira: O ID do Service Desk do projeto "Support" (SUP) é 1.
+      serviceDeskId: '1',
+      // ID do Request Type 'Get IT help' retirado da URL da sua print:
+      requestTypeId: '1',
+      requestFieldValues: {
         summary: `[Suporte App] ${tipoDuvida} — ${nome}`,
-        description: buildAdfDescription(
+        description: buildDescriptionText(
           emailCliente,
           tipoDuvida,
           descricao,
           diagnostico || 'Diagnóstico não disponível',
         ),
-        issuetype: {
-          // Tipo de item no Jira
-          name: 'Task',
-        },
       },
+      // Cadastra automaticamente o usuário como Cliente no Jira
+      raiseOnBehalfOf: emailCliente,
     }
 
-    // ── 5. Disparo para a API do Jira Cloud v3 ──────────────────────────────
+    // ── 5. Disparo para a API do Jira Service Management ────────────────────
 
-    const jiraResponse = await fetch(`https://${jiraDomain}/rest/api/3/issue`, {
+    const jiraResponse = await fetch(`https://${jiraDomain}/rest/servicedeskapi/request`, {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${credentials}`,
@@ -185,7 +132,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
       console.error(`❌ Jira API Error [${jiraResponse.status}]:`, jiraError)
       return jsonResponse(
-        { error: `Erro ao criar ticket no Jira (${jiraResponse.status}).`, details: jiraError },
+        { error: `Erro ao criar ticket no Jira Service Management (${jiraResponse.status}).`, details: jiraError },
         jiraResponse.status,
       )
     }
@@ -196,8 +143,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       {
         success: true,
         message: 'Ticket criado com sucesso!',
-        ticketKey: jiraData.key || null,   // Ex: "SUP-42"
-        ticketId: jiraData.id || null,
+        ticketKey: jiraData.issueKey || jiraData.key || null,   // Ex: "SUP-42"
+        ticketId: jiraData.issueId || jiraData.id || null,
       },
       200,
     )
