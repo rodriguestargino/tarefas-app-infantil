@@ -799,6 +799,13 @@ window.sendSupportTicket = async () => {
     return;
   }
 
+  // Verifica se o Supabase está configurado
+  if (!supabase) {
+    triggerHapticImpact();
+    alert('O desenvolvedor ainda não configurou as credenciais do Supabase na nuvem!\n\nO envio de tickets de suporte requer a conexão com o servidor.');
+    return;
+  }
+
   // Get the submit button and show loading state
   const submitBtn = document.querySelector('.support-form-box button');
   const originalBtnText = submitBtn ? submitBtn.textContent : 'Enviar Ticket de Suporte 🚀';
@@ -817,76 +824,71 @@ window.sendSupportTicket = async () => {
     platform = "iOS Device";
   }
 
-  const body = `Nome: ${name}
-E-mail: ${email}
-Assunto: ${subject}
+  const diagnostico = `Plataforma: ${platform} | Versão do App: v${appVersion} | User-Agent: ${userAgent}`;
 
-Mensagem:
-------------------------------------------
-${message}
-------------------------------------------
-
-Informações do Aparelho (Diagnóstico):
-- Plataforma: ${platform}
-- Versão do App: v${appVersion}
-- User Agent: ${userAgent}`;
-
-  const emailServiceUrl = import.meta.env.VITE_EMAIL_SERVICE_URL;
-  
   try {
-    if (!emailServiceUrl) {
-      throw new Error("VITE_EMAIL_SERVICE_URL não configurado");
-    }
-
-    const payload = {
-      name,
-      email,
-      subject,
-      message,
-      platform,
-      appVersion,
-      userAgent
-    };
-
-    const response = await fetch(emailServiceUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+    const { data, error } = await supabase.functions.invoke('suporte-jira', {
+      body: {
+        nome: name,
+        emailCliente: email,
+        tipoDuvida: subject,
+        descricao: message,
+        diagnostico,
       },
-      body: JSON.stringify(payload)
     });
 
-    if (response && response.ok) {
+    if (error) {
+      throw new Error(error.message || 'Falha ao chamar a Edge Function.');
+    }
+
+    if (data && data.success) {
       triggerHapticSuccess();
-      showToast('📬 Ticket enviado com sucesso! 🚀');
-      
+      const ticketInfo = data.ticketKey ? ` (${data.ticketKey})` : '';
+      showToast(`📬 Ticket${ticketInfo} enviado com sucesso! 🚀`);
+
+      // Enviar email de confirmação ao usuário
+      if (email) {
+        try {
+          await supabase.functions.invoke('enviar-email', {
+            body: {
+              to: email,
+              subject: '📬 Recebemos sua solicitação - App Tarefas',
+              html: `
+                <h2>Olá, ${name}!</h2>
+                <p>Seu ticket de suporte <strong>${data.ticketKey || ''}</strong> foi criado com sucesso.</p>
+                <p>Nossa equipe irá analisar a sua solicitação (${subject}) e responder o mais rápido possível.</p>
+                <br>
+                <p style="color:#888;">— Equipe App Tarefas 🦸</p>
+              `,
+            },
+          });
+        } catch (e) {
+          console.error('Erro ao enviar email de confirmação', e);
+        }
+      }
+
       // Clear inputs
       const msgInput = document.getElementById('supportMessageInput');
       if (msgInput) msgInput.value = '';
-      
+
       const nameInput = document.getElementById('supportNameInput');
       const emailInput = document.getElementById('supportEmailInput');
       const subjectInput = document.getElementById('supportSubjectInput');
       if (nameInput) nameInput.value = '';
       if (emailInput) emailInput.value = '';
       if (subjectInput) subjectInput.value = '';
-      
+
       // Close parent dashboard after a brief delay
       setTimeout(() => {
         closeParentDashboard();
       }, 1500);
     } else {
-      throw new Error(`Falha no envio. Código de status: ${response ? response.status : 'sem resposta'}`);
+      throw new Error(data?.error || 'Resposta inesperada do servidor.');
     }
   } catch (err) {
     console.error('Erro ao enviar ticket:', err);
     triggerHapticImpact();
-    
-    if (!emailServiceUrl) {
-      alert(`[Configuração Necessária] Insira a variável VITE_EMAIL_SERVICE_URL no seu arquivo .env com a URL do seu microsserviço de e-mail seguro!`);
-    } else {
-      alert('Erro ao enviar o ticket. Por favor, verifique se o servidor seguro de e-mails (BFF) está online e tente novamente.');
-    }
+    alert('Erro ao enviar o ticket de suporte. Verifique sua conexão com a internet e tente novamente. 😥');
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;

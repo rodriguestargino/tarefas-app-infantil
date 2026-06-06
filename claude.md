@@ -148,3 +148,29 @@ npx capacitor-assets generate --android  # Gera ícones e splash screens nativos
 - **Sem dependências externas pesadas**: Sons são sintetizados via Web Audio API, sem arquivos de áudio.
 - **Reset diário automático**: Tarefas e livros empacotados são resetados na mudança de dia.
 - **Não expor `.env`**: Credenciais Supabase estão no `.env` (gitignored). Usar `.env.example` como referência.
+
+---
+
+## Suporte e Integrações Externas (Supabase Edge Functions)
+
+O fluxo de suporte ao cliente foi implementado utilizando **Supabase Edge Functions** para manter todas as chaves de API ocultas no backend (Server-side). O fluxo se baseia em duas funções:
+
+### 1. `suporte-jira` (Edge Function)
+- Recebe a requisição do formulário da Central dos Pais.
+- Conecta na API do Jira Cloud v3 (`/rest/api/3/issue`) usando HTTP Basic Auth.
+- **Secrets configurados no Supabase CLI:** `JIRA_DOMAIN`, `JIRA_EMAIL` e `JIRA_API_TOKEN`.
+- O payload utiliza o **Atlassian Document Format (ADF)** para embutir as informações do formulário e de diagnóstico (OS, versão do app).
+- O Jira Issue Type utilizado é o `Task` no projeto de key `SUP`. Cuidado: `"Get IT help"` é um Request Type de portal, e não deve ser usado como Issue Type na API.
+
+### 2. `enviar-email` (Edge Function)
+- Função transacional criada para notificar o cliente via e-mail utilizando a **API do Resend**.
+- Disparada pelo frontend do app (`ParentDashboard.js`) imediatamente após a criação bem-sucedida do ticket no Jira.
+- **Secret configurado:** `RESEND_API_KEY`.
+
+### Jira Automation (Email de Resolução)
+Como a API `/rest/api/3/issue` não cria tickets em nome do cliente automaticamente (o criador é o dono do Token), o Jira não envia e-mails nativos de resolução do Service Desk de volta ao cliente. 
+Para suprir essa necessidade de forma "No-Code":
+- Foi configurada/recomendada uma **Jira Automation Rule**.
+- **Trigger:** Transition to `Done`.
+- **Action:** Send Email.
+- O destino extrai o e-mail do cliente através de Regex aplicada no corpo do ticket: `{{issue.description.match("([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)")}}`.
