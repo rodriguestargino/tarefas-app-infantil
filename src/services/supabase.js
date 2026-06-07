@@ -5,6 +5,50 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
+export async function signInWithGoogle() {
+  if (!supabase) return { error: 'Serviço de nuvem não configurado 🔌' };
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin
+    }
+  });
+  return { data, error };
+}
+
+export async function signOut() {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+}
+
+export async function getUserSession() {
+  if (!supabase) return null;
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) return null;
+  return session.user;
+}
+
+export async function recoverFamilyCode() {
+  if (!supabase) return null;
+  const user = await getUserSession();
+  if (!user) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('families')
+      .select('code')
+      .eq('owner_id', user.id)
+      .single();
+
+    if (error || !data) return null;
+    setFamilyCode(data.code);
+    return data.code;
+  } catch (e) {
+    console.error('Erro ao recuperar código:', e);
+    return null;
+  }
+}
+
 const LS_FAMILY_CODE = 'tarefas_family_code';
 
 export function getFamilyCode() {
@@ -21,9 +65,16 @@ export function setFamilyCode(code) {
 
 export async function generateFamilyCode() {
   if (!supabase) return null;
+
+  const user = await getUserSession();
+  if (!user) {
+    alert("Você precisa fazer login com Google para gerar um novo código.");
+    return null;
+  }
+
   const code = 'SUPER-' + Math.floor(100000 + Math.random() * 900000);
   try {
-    const { error } = await supabase.from('families').insert([{ code }]);
+    const { error } = await supabase.from('families').insert([{ code, owner_id: user.id }]);
     if (error) {
       // Retry in case of collision
       return generateFamilyCode();

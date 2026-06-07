@@ -24,7 +24,11 @@ import {
   joinFamily,
   pullCloudData,
   syncLocalToCloud,
-  supabase
+  supabase,
+  signInWithGoogle,
+  signOut,
+  getUserSession,
+  recoverFamilyCode
 } from '../services/supabase.js';
 
 let gateNum1 = 0;
@@ -374,16 +378,27 @@ function renderSyncAdmin(container) {
   renderParentCloudSyncDetails();
 }
 
-function renderParentCloudSyncDetails() {
+async function renderParentCloudSyncDetails() {
   const statusArea = document.getElementById('parentCloudStatusArea');
   if (!statusArea) return;
 
-  const code = getFamilyCode();
+  if (!supabase) {
+    statusArea.innerHTML = `<div style="padding:16px; color:#FF6B6B;">Serviço de Nuvem não configurado.</div>`;
+    return;
+  }
+
+  const user = await getUserSession();
+  let code = getFamilyCode();
+
+  if (user && !code) {
+    code = await recoverFamilyCode();
+  }
 
   if (code) {
     statusArea.innerHTML = `
       <div style="background:rgba(99,230,190,0.1); border:2px solid #20c997; border-radius:20px; padding:16px; margin-bottom:16px; text-align:center;">
         <div style="font-size:1.1rem; font-weight:800; color:#63E6BE; margin-bottom:8px;">Sincronização Ativada! ☁️</div>
+        ${user ? `<div style="font-size:0.8rem; color:white; margin-bottom:8px;">Logado como: ${user.email} <button onclick="window.parentGoogleLogout()" style="background:transparent; border:none; color:#FF6B6B; text-decoration:underline;">Sair</button></div>` : ''}
         <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px;">Seu Código de Família:</div>
         <div style="font-size:1.6rem; font-weight:900; letter-spacing:2px; color:#FFD166; background:rgba(0,0,0,0.2); padding:8px 16px; border-radius:12px; display:inline-block; margin-bottom:12px;">${code}</div>
         
@@ -396,20 +411,43 @@ function renderParentCloudSyncDetails() {
       </div>
     `;
   } else {
-    statusArea.innerHTML = `
-      <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:20px 16px; text-align:center; margin-bottom:16px;">
-        <button class="settings-save-btn" onclick="window.parentCreateFamilyGroup()" style="background:linear-gradient(135deg, #7048E8, #C5A3FF); box-shadow:0 4px 12px rgba(112,72,232,0.4); font-size:1.1rem; padding:12px 24px; border-radius:24px; margin-bottom:16px;">
-          Ativar Sincronização em Nuvem ☁️
-        </button>
-        
-        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:16px 0;">
-        
-        <div style="font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:8px; font-weight:700;">Já possui um código de outro aparelho?</div>
-        <div style="display:flex; gap:8px; justify-content:center;">
-          <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
-          <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
+    if (!user) {
+      statusArea.innerHTML = `
+        <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:20px 16px; text-align:center; margin-bottom:16px;">
+          <p style="color:white; font-size:0.9rem; margin-top:0; margin-bottom:12px; font-weight:600;">Para gerar um novo código e salvar na nuvem, é necessário fazer login.</p>
+          <button class="settings-save-btn" onclick="window.parentGoogleLogin()" style="background:white; color:#333; font-size:1.05rem; padding:10px 20px; border-radius:24px; margin-bottom:16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            Login com Google
+          </button>
+          
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:16px 0;">
+          
+          <div style="font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:8px; font-weight:700;">Já possui um código de outro aparelho?</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
+            <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
+          </div>
         </div>
-    `;
+      `;
+    } else {
+      statusArea.innerHTML = `
+        <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:20px 16px; text-align:center; margin-bottom:16px;">
+          <div style="font-size:0.8rem; color:white; margin-bottom:16px; background:rgba(0,0,0,0.2); padding:6px; border-radius:12px; display:inline-block;">
+            Logado como: ${user.email} <button onclick="window.parentGoogleLogout()" style="background:transparent; border:none; color:#FF6B6B; text-decoration:underline; cursor:pointer;">Sair</button>
+          </div>
+          <button class="settings-save-btn" onclick="window.parentCreateFamilyGroup()" style="background:linear-gradient(135deg, #7048E8, #C5A3FF); box-shadow:0 4px 12px rgba(112,72,232,0.4); font-size:1.1rem; padding:12px 24px; border-radius:24px; margin-bottom:16px;">
+            Gerar Novo Código de Família ☁️
+          </button>
+          
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:16px 0;">
+          
+          <div style="font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:8px; font-weight:700;">Já possui um código de outro aparelho?</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
+            <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
+          </div>
+        </div>
+      `;
+    }
   }
 }
 
@@ -693,6 +731,20 @@ window.parentDisconnectFamily = () => {
   renderActiveTabContent();
   showToast('🔌 Desconectado com sucesso!');
   setTimeout(() => window.location.reload(), 1000);
+};
+
+window.parentGoogleLogin = async () => {
+  showToast('Redirecionando para login...');
+  const { error } = await signInWithGoogle();
+  if (error) {
+    alert("Erro ao fazer login: " + (error.message || error));
+  }
+};
+
+window.parentGoogleLogout = async () => {
+  showToast('Saindo...');
+  await signOut();
+  renderActiveTabContent();
 };
 
 window.parentConnectFamily = async () => {
