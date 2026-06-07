@@ -400,6 +400,10 @@ async function renderParentCloudSyncDetails() {
         <div style="font-size:1.1rem; font-weight:800; color:#63E6BE; margin-bottom:8px;">Sincronização Ativada! ☁️</div>
         ${user ? `<div style="font-size:0.8rem; color:white; margin-bottom:8px;">Logado como: ${user.email} <button onclick="window.parentGoogleLogout()" style="background:transparent; border:none; color:#FF6B6B; text-decoration:underline;">Sair</button></div>` : ''}
         <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px;">Seu Código de Família:</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
+          <button onclick="window.parentCopyCode('${code}')" style="background:rgba(255,255,255,0.15); border:none; border-radius:12px; padding:10px 16px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-size:0.9rem; font-weight:700;" title="Copiar Código">📋 Copiar</button>
+          <button onclick="window.parentShareCode('${code}')" style="background:rgba(255,255,255,0.15); border:none; border-radius:12px; padding:10px 16px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-size:0.9rem; font-weight:700;" title="Compartilhar Código">📤 Compartilhar</button>
+        </div>
         <div style="font-size:1.6rem; font-weight:900; letter-spacing:2px; color:#FFD166; background:rgba(0,0,0,0.2); padding:8px 16px; border-radius:12px; display:inline-block; margin-bottom:12px;">${code}</div>
         
         <p style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-top:0;">Use este código no outro aparelho para vincular os dados.</p>
@@ -745,6 +749,33 @@ window.parentGoogleLogout = async () => {
   showToast('Saindo...');
   await signOut();
   renderActiveTabContent();
+};
+
+window.parentCopyCode = async (code) => {
+  try {
+    await navigator.clipboard.writeText(code);
+    showToast('📋 Código copiado!');
+    triggerHapticSuccess();
+  } catch (err) {
+    showToast('Erro ao copiar código.');
+  }
+};
+
+window.parentShareCode = async (code) => {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Código do Minhas Tarefas',
+        text: `Use este código para sincronizar o app Minhas Tarefas: ${code}`
+      });
+      triggerHapticSuccess();
+    } catch (err) {
+      console.error('Erro ao compartilhar', err);
+    }
+  } else {
+    // Fallback to copy if Web Share API is not supported
+    window.parentCopyCode(code);
+  }
 };
 
 window.parentConnectFamily = async () => {
