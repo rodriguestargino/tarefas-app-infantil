@@ -483,8 +483,8 @@ function renderSupport(container) {
     platform = "iOS Device";
   }
 
-  // App version is 1.0.4 (from package.json)
-  const appVersion = "1.0.4";
+  // App version is 1.0.6 (from package.json)
+  const appVersion = "1.0.6";
 
   // Build FAQ HTML
   const faqHtml = faqs.map((faq, idx) => `
