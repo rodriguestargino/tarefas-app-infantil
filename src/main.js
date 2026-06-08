@@ -20,7 +20,7 @@ import {
 import { triggerHapticImpact, triggerHapticSuccess } from './services/haptics.js';
 import { renderAgenda, getSelectedDayIdx, setSelectedDayIdx } from './components/AgendaSection.js';
 import { renderEvents } from './components/EventsSection.js';
-import { pullCloudData, subscribeToChanges, getFamilyCode } from './services/supabase.js';
+import { pullCloudData, subscribeToChanges, getFamilyCode, claimFamilyCode, getUserSession } from './services/supabase.js';
 import { warmUpAudio, playDoneSound } from './services/audio.js';
 import { renderTasks } from './components/TaskCard.js';
 import { updateStars, updateProgress } from './components/ProgressSection.js';
@@ -512,6 +512,10 @@ async function init() {
 
   const code = getFamilyCode();
   if (code) {
+    const user = await getUserSession();
+    if (user) {
+      await claimFamilyCode(code);
+    }
     // Pull latest data from remote Supabase cloud
     await pullCloudData();
     // Reload state in memory

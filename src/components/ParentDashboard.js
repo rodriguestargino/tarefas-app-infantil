@@ -28,7 +28,8 @@ import {
   signInWithGoogle,
   signOut,
   getUserSession,
-  recoverFamilyCode
+  recoverFamilyCode,
+  claimFamilyCode
 } from '../services/supabase.js';
 
 let gateNum1 = 0;
@@ -395,10 +396,30 @@ async function renderParentCloudSyncDetails() {
   }
 
   if (code) {
+    let isUnowned = false;
+    try {
+      const { data, error } = await supabase
+        .from('families')
+        .select('owner_id')
+        .eq('code', code.toUpperCase())
+        .single();
+      if (!error && data && data.owner_id === null) {
+        isUnowned = true;
+      }
+    } catch (e) {
+      console.error('Erro ao verificar dono do código:', e);
+    }
+
     statusArea.innerHTML = `
       <div style="background:rgba(99,230,190,0.1); border:2px solid #20c997; border-radius:20px; padding:16px; margin-bottom:16px; text-align:center;">
         <div style="font-size:1.1rem; font-weight:800; color:#63E6BE; margin-bottom:8px;">Sincronização Ativada! ☁️</div>
         ${user ? `<div style="font-size:0.8rem; color:white; margin-bottom:8px;">Logado como: ${user.email} <button onclick="window.parentGoogleLogout()" style="background:transparent; border:none; color:#FF6B6B; text-decoration:underline;">Sair</button></div>` : ''}
+        ${!user && isUnowned ? `
+          <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:10px; margin-bottom:12px; border: 1px dashed rgba(255,255,255,0.2);">
+            <span style="font-size:0.8rem; color:white; display:block; margin-bottom:6px;">🔑 Código não protegido contra perdas.</span>
+            <button class="settings-save-btn" onclick="window.parentGoogleLogin()" style="background:white; color:#333; font-size:0.85rem; padding:6px 12px; border-radius:12px; font-weight:700; cursor:pointer;">Vincular Conta Google</button>
+          </div>
+        ` : ''}
         <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px;">Seu Código de Família:</div>
         <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
           <button onclick="window.parentCopyCode('${code}')" style="background:rgba(255,255,255,0.15); border:none; border-radius:12px; padding:10px 16px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-size:0.9rem; font-weight:700;" title="Copiar Código">📋 Copiar</button>

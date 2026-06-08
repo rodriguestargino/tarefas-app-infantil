@@ -49,6 +49,43 @@ export async function recoverFamilyCode() {
   }
 }
 
+export async function claimFamilyCode(code) {
+  if (!supabase) return null;
+  const user = await getUserSession();
+  if (!user || !code) return null;
+
+  const formattedCode = code.toUpperCase();
+  try {
+    const { data: family, error: fetchError } = await supabase
+      .from('families')
+      .select('owner_id')
+      .eq('code', formattedCode)
+      .single();
+
+    if (fetchError || !family) {
+      console.warn('Código não encontrado ou erro de leitura no banco:', fetchError);
+      return null;
+    }
+
+    if (family.owner_id === null) {
+      const { error: updateError } = await supabase
+        .from('families')
+        .update({ owner_id: user.id })
+        .eq('code', formattedCode);
+
+      if (!updateError) {
+        console.log(`Sucesso: Código ${formattedCode} agora pertence a ${user.email}`);
+        return true;
+      } else {
+        console.error('Erro ao registrar proprietário do código legado:', updateError);
+      }
+    }
+  } catch (e) {
+    console.error('Falha ao tentar reivindicar código:', e);
+  }
+  return false;
+}
+
 const LS_FAMILY_CODE = 'tarefas_family_code';
 
 export function getFamilyCode() {
