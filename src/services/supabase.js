@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -6,6 +8,23 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 if (supabase) {
+  App.addListener('appUrlOpen', async (event) => {
+    if (event.url.includes('access_token=')) {
+      try {
+        const url = new URL(event.url);
+        const hashParams = new URLSearchParams(url.hash.substring(1));
+        const access_token = hashParams.get('access_token');
+        const refresh_token = hashParams.get('refresh_token');
+
+        if (access_token && refresh_token) {
+          await supabase.auth.setSession({ access_token, refresh_token });
+        }
+      } catch (e) {
+        console.error('Error parsing app link:', e);
+      }
+    }
+  });
+
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
       if (window.location.hash.includes('access_token')) {
@@ -28,10 +47,16 @@ if (supabase) {
 
 export async function signInWithGoogle() {
   if (!supabase) return { error: 'Serviço de nuvem não configurado 🔌' };
+
+  let redirectTo = window.location.origin;
+  if (Capacitor.isNativePlatform()) {
+    redirectTo = 'com.tarefas.crianca://login-callback';
+  }
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin
+      redirectTo
     }
   });
   return { data, error };
