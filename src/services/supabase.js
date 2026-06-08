@@ -248,3 +248,19 @@ export function subscribeToChanges(onUpdate) {
     )
     .subscribe();
 }
+
+export async function deleteAccount() {
+  if (!supabase) return { success: false, error: 'Serviço de nuvem não configurado 🔌' };
+  
+  try {
+    const { error } = await supabase.rpc('delete_user_and_data');
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (e) {
+    console.error('Falha ao deletar conta:', e);
+    return { success: false, error: 'Falha de conexão com o servidor' };
+  }
+}
+

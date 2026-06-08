@@ -15,7 +15,8 @@ import {
   loadSchoolAgenda,
   loadPackedBooks,
   getChildName,
-  setChildName
+  setChildName,
+  clearAllLocalData
 } from '../services/storage.js';
 import {
   getFamilyCode,
@@ -29,7 +30,8 @@ import {
   signOut,
   getUserSession,
   recoverFamilyCode,
-  claimFamilyCode
+  claimFamilyCode,
+  deleteAccount
 } from '../services/supabase.js';
 
 let gateNum1 = 0;
@@ -433,6 +435,19 @@ async function renderParentCloudSyncDetails() {
           <button class="settings-save-btn" onclick="window.parentForceCloudPull()" style="background:#20c997; width:auto; font-size:0.85rem; box-shadow:none;">Atualizar Agora 🔄</button>
           <button class="settings-save-btn" onclick="window.parentDisconnectFamily()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; width:auto; font-size:0.85rem; box-shadow:none;">Desativar Nuvem</button>
         </div>
+
+        ${user ? `
+          <!-- DANGER ZONE -->
+          <div style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; text-align: left;">
+            <h4 style="color:#FF6B6B; font-size:0.9rem; margin-top:0; margin-bottom:6px; font-weight:800;">Zona de Perigo ⚠️</h4>
+            <p style="color:rgba(255,255,255,0.5); font-size:0.75rem; margin-top:0; margin-bottom:12px; line-height:1.3;">
+              Ao excluir sua conta, todos os seus dados da nuvem e configurações locais serão permanentemente apagados de forma irreversível.
+            </p>
+            <button class="settings-save-btn" onclick="window.parentDeleteAccountAndData()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; font-size:0.85rem; padding:8px 16px; border-radius:12px; font-weight:800; cursor:pointer; width:100%; box-shadow:none;">
+              Excluir Conta e Apagar Dados 🗑️
+            </button>
+          </div>
+        ` : ''}
       </div>
     `;
   } else {
@@ -469,6 +484,17 @@ async function renderParentCloudSyncDetails() {
           <div style="display:flex; gap:8px; justify-content:center;">
             <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
             <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
+          </div>
+
+          <!-- DANGER ZONE -->
+          <div style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; text-align: left;">
+            <h4 style="color:#FF6B6B; font-size:0.9rem; margin-top:0; margin-bottom:6px; font-weight:800;">Zona de Perigo ⚠️</h4>
+            <p style="color:rgba(255,255,255,0.5); font-size:0.75rem; margin-top:0; margin-bottom:12px; line-height:1.3;">
+              Ao excluir sua conta, todas as suas configurações locais e dados sincronizados na nuvem serão apagados permanentemente de forma irreversível.
+            </p>
+            <button class="settings-save-btn" onclick="window.parentDeleteAccountAndData()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; font-size:0.85rem; padding:8px 16px; border-radius:12px; font-weight:800; cursor:pointer; width:100%; box-shadow:none;">
+              Excluir Conta e Apagar Dados 🗑️
+            </button>
           </div>
         </div>
       `;
@@ -875,6 +901,32 @@ window.parentForceCloudPull = async () => {
     renderActiveTabContent();
   }
 };
+
+window.parentDeleteAccountAndData = async () => {
+  const confirm1 = confirm("⚠️ ATENÇÃO: Tem certeza absoluta que deseja excluir sua conta e APAGAR todos os seus dados na nuvem? Esta ação não pode ser desfeita!");
+  if (!confirm1) return;
+  
+  const confirm2 = confirm("🚨 CONFIRMAÇÃO FINAL: Isso desconectará todos os aparelhos da família e apagará o progresso permanentemente. Deseja mesmo prosseguir?");
+  if (!confirm2) return;
+
+  showToast('Excluindo conta...');
+  triggerHapticImpact();
+
+  const res = await deleteAccount();
+  if (res.success) {
+    // 1. Limpa todas as configurações salvas em cache local
+    clearAllLocalData();
+    
+    // 2. Notifica o usuário e reinicia a aplicação
+    triggerHapticSuccess();
+    alert("Sua conta e dados foram apagados com sucesso. O aplicativo será reiniciado.");
+    window.location.reload();
+  } else {
+    triggerHapticImpact();
+    alert("Não foi possível excluir a conta: " + res.error);
+  }
+};
+
 
 window.toggleFaqAnswer = (idx) => {
   const answer = document.getElementById(`faq-answer-${idx}`);

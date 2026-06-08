@@ -303,3 +303,17 @@ export function saveRedemptionRequests(list) {
     syncLocalToCloud('redemptions', list);
   } catch {}
 }
+
+export function clearAllLocalData() {
+  try {
+    const keys = Object.keys(localStorage);
+    keys.forEach(k => {
+      if (k.startsWith('tarefas_')) {
+        localStorage.removeItem(k);
+      }
+    });
+  } catch (e) {
+    console.error('Erro ao limpar localStorage:', e);
+  }
+}
+
