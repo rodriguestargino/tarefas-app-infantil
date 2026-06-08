@@ -5,6 +5,27 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
+if (supabase) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      if (window.location.hash.includes('access_token')) {
+        // Remove hash fragment to clean up URL
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        
+        // Let the user know and open the dashboard
+        setTimeout(() => {
+          if (window.showToast) {
+            window.showToast('Login realizado com sucesso! 🎉');
+          }
+          if (window.openParentDashboard) {
+            window.openParentDashboard();
+          }
+        }, 500);
+      }
+    }
+  });
+}
+
 export async function signInWithGoogle() {
   if (!supabase) return { error: 'Serviço de nuvem não configurado 🔌' };
   const { data, error } = await supabase.auth.signInWithOAuth({

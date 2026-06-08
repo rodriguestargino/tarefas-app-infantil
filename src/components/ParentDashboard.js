@@ -86,7 +86,7 @@ export function checkParentGateAnswer() {
     setTimeout(() => inputEl.classList.remove('shake'), 400);
     inputEl.value = '';
     inputEl.placeholder = 'Errado! Tente de novo 🤔';
-    showToast('Resposta incorreta! Tente novamente 🛡️');
+    window.showToast('Resposta incorreta! Tente novamente 🛡️');
   }
 }
 
@@ -622,12 +622,12 @@ window.handleRedemptionApproval = (reqId, approved) => {
 
   if (approved) {
     triggerHapticSuccess();
-    showToast('🏆 Prêmio aprovado! Divirta-se!');
+    window.showToast('🏆 Prêmio aprovado! Divirta-se!');
   } else {
     const balance = loadStarBalance();
     saveStarBalance(balance + req.cost);
     triggerHapticSuccess();
-    showToast('❌ Solicitação recusada. Estrelas devolvidas!');
+    window.showToast('❌ Solicitação recusada. Estrelas devolvidas!');
   }
 
   saveRedemptionRequests(list);
@@ -724,7 +724,7 @@ window.saveParentKidName = () => {
   if (span) span.textContent = name;
 
   triggerHapticSuccess();
-  showToast(`Nome atualizado para: ${name}! 🦸`);
+  window.showToast(`Nome atualizado para: ${name}! 🦸`);
 };
 
 window.parentShowTaskForm = () => {
@@ -766,7 +766,7 @@ window.parentDeleteTask = (taskId) => {
   }
 
   triggerHapticImpact();
-  showToast('🗑️ Tarefa excluída!');
+  window.showToast('🗑️ Tarefa excluída!');
 
   renderParentTasksList();
 
@@ -780,12 +780,12 @@ window.parentDisconnectFamily = () => {
   setFamilyCode(null);
   triggerHapticImpact();
   renderActiveTabContent();
-  showToast('🔌 Desconectado com sucesso!');
+  window.showToast('🔌 Desconectado com sucesso!');
   setTimeout(() => window.location.reload(), 1000);
 };
 
 window.parentGoogleLogin = async () => {
-  showToast('Redirecionando para login...');
+  window.showToast('Redirecionando para login...');
   const { error } = await signInWithGoogle();
   if (error) {
     alert("Erro ao fazer login: " + (error.message || error));
@@ -793,7 +793,7 @@ window.parentGoogleLogin = async () => {
 };
 
 window.parentGoogleLogout = async () => {
-  showToast('Saindo...');
+  window.showToast('Saindo...');
   await signOut();
   renderActiveTabContent();
 };
@@ -801,10 +801,10 @@ window.parentGoogleLogout = async () => {
 window.parentCopyCode = async (code) => {
   try {
     await navigator.clipboard.writeText(code);
-    showToast('📋 Código copiado!');
+    window.showToast('📋 Código copiado!');
     triggerHapticSuccess();
   } catch (err) {
-    showToast('Erro ao copiar código.');
+    window.showToast('Erro ao copiar código.');
   }
 };
 
@@ -835,13 +835,13 @@ window.parentConnectFamily = async () => {
   const input = document.getElementById('parentJoinCodeInput');
   if (!input) return;
   const code = input.value.trim();
-  if (!code) { showToast('⚠️ Por favor, digite o código de família!'); return; }
+  if (!code) { window.showToast('⚠️ Por favor, digite o código de família!'); return; }
 
-  showToast('🔌 Conectando...');
+  window.showToast('🔌 Conectando...');
   const res = await joinFamily(code);
   if (res.success) {
     triggerHapticSuccess();
-    showToast('👨‍👩‍👧‍👦 Conectado à família com sucesso!');
+    window.showToast('👨‍👩‍👧‍👦 Conectado à família com sucesso!');
     await pullCloudData();
     renderActiveTabContent();
     setTimeout(() => window.location.reload(), 1200);
@@ -858,7 +858,7 @@ window.parentCreateFamilyGroup = async () => {
     return;
   }
   
-  showToast('⚡ Criando grupo...');
+  window.showToast('⚡ Criando grupo...');
   const code = await generateFamilyCode();
   if (code) {
     triggerHapticSuccess();
@@ -891,10 +891,10 @@ window.parentCreateFamilyGroup = async () => {
 };
 
 window.parentForceCloudPull = async () => {
-  showToast('🔄 Sincronizando...');
+  window.showToast('🔄 Sincronizando...');
   const hasChanges = await pullCloudData();
   triggerHapticSuccess();
-  showToast('💾 Sincronizado com a nuvem!');
+  window.showToast('💾 Sincronizado com a nuvem!');
   if (hasChanges) {
     setTimeout(() => window.location.reload(), 1000);
   } else {
@@ -909,7 +909,7 @@ window.parentDeleteAccountAndData = async () => {
   const confirm2 = confirm("🚨 CONFIRMAÇÃO FINAL: Isso desconectará todos os aparelhos da família e apagará o progresso permanentemente. Deseja mesmo prosseguir?");
   if (!confirm2) return;
 
-  showToast('Excluindo conta...');
+  window.showToast('Excluindo conta...');
   triggerHapticImpact();
 
   const res = await deleteAccount();
@@ -1000,7 +1000,7 @@ window.sendSupportTicket = async () => {
     if (data && data.success) {
       triggerHapticSuccess();
       const ticketInfo = data.ticketKey ? ` (${data.ticketKey})` : '';
-      showToast(`📬 Ticket${ticketInfo} enviado com sucesso! 🚀`);
+      window.showToast(`📬 Ticket${ticketInfo} enviado com sucesso! 🚀`);
 
       // Enviar email de confirmação ao usuário
       if (email) {
@@ -1065,7 +1065,7 @@ window.setParentTab          = setParentTab;
 
 // ─── Local toast helper ───────────────────────────────────────────────────────
 
-function showToast(msg) {
+function window.showToast(msg) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
