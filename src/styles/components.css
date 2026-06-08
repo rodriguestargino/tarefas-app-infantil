@@ -292,3 +292,15 @@
   border-color: #74C0FC;
   transform: translateY(-1px);
 }
+
+/* ── LITE MODE OVERRIDES ── */
+body.lite-mode .task-card { box-shadow: none; border: 1px solid #eee; border-left-width: 6px; }
+body.lite-mode .task-card:hover { transform: none; box-shadow: none; }
+body.lite-mode .timer-box { box-shadow: none; background: #274060; animation: none; }
+body.lite-mode .settings-box { box-shadow: none; background: #274060; animation: none; }
+body.lite-mode .progress-section { box-shadow: none; border: 1px solid #eee; }
+body.lite-mode .timer-start-btn { box-shadow: none; }
+body.lite-mode .timer-start-btn:hover { transform: none; box-shadow: none; }
+body.lite-mode .check-circle { box-shadow: none; transition: none; }
+body.lite-mode .task-card.done .check-circle { transform: none; box-shadow: none; }
+body.lite-mode .progress-fill { animation: none; background: #63E6BE; }

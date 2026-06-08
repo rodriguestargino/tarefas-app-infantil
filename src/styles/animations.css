@@ -70,3 +70,10 @@
   from { transform: scale(1.08); }
   to { transform: scale(1); }
 }
+
+/* ── LITE MODE OVERRIDES ── */
+body.lite-mode .cloud { display: none !important; animation: none !important; }
+body.lite-mode .star-deco { animation: none !important; }
+body.lite-mode .timer-start-btn.running { animation: none !important; background: #FF6B6B !important; }
+body.lite-mode .timer-task-emoji { animation: none !important; }
+body.lite-mode .countdown-display.warning { animation: none !important; text-shadow: none !important; }

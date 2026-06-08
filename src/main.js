@@ -501,7 +501,25 @@ window.clearApprovedRedemption = (reqId) => {
 };
 
 /* ═══════════════ INITIALIZATION ═══════════════ */
+function detectAndApplyLiteMode() {
+  const ua = navigator.userAgent;
+  let isLegacy = false;
+  if (/Android [4-8]\./i.test(ua)) {
+    isLegacy = true;
+  } else {
+    const match = ua.match(/Chrome\/(\d+)/i);
+    if (match && parseInt(match[1]) < 75) {
+      isLegacy = true;
+    }
+  }
+  if (isLegacy) {
+    document.body.classList.add('lite-mode');
+  }
+}
+
 async function init() {
+  detectAndApplyLiteMode();
+
   // Process any stars pending from previous days before loading the UI
   processPastDaysStars();
 
