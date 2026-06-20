@@ -65,6 +65,7 @@ export async function signInWithGoogle() {
 export async function signOut() {
   if (!supabase) return;
   await supabase.auth.signOut();
+  setFamilyCode(null);
 }
 
 export async function getUserSession() {
@@ -303,6 +304,7 @@ export async function deleteAccount() {
     if (error) {
       return { success: false, error: error.message };
     }
+    setFamilyCode(null);
     return { success: true };
   } catch (e) {
     console.error('Falha ao deletar conta:', e);

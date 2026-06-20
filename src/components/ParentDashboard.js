@@ -796,6 +796,7 @@ window.parentGoogleLogout = async () => {
   window.showToast('Saindo...');
   await signOut();
   renderActiveTabContent();
+  setTimeout(() => window.location.reload(), 1000);
 };
 
 window.parentCopyCode = async (code) => {
@@ -1002,26 +1003,7 @@ window.sendSupportTicket = async () => {
       const ticketInfo = data.ticketKey ? ` (${data.ticketKey})` : '';
       window.showToast(`📬 Ticket${ticketInfo} enviado com sucesso! 🚀`);
 
-      // Enviar email de confirmação ao usuário
-      if (email) {
-        try {
-          await supabase.functions.invoke('enviar-email', {
-            body: {
-              to: email,
-              subject: '📬 Recebemos sua solicitação - App Tarefas',
-              html: `
-                <h2>Olá, ${name}!</h2>
-                <p>Seu ticket de suporte <strong>${data.ticketKey || ''}</strong> foi criado com sucesso.</p>
-                <p>Nossa equipe irá analisar a sua solicitação (${subject}) e responder o mais rápido possível.</p>
-                <br>
-                <p style="color:#888;">— Equipe App Tarefas 🦸</p>
-              `,
-            },
-          });
-        } catch (e) {
-          console.error('Erro ao enviar email de confirmação', e);
-        }
-      }
+      // Jira Service Management envia notificações de ticket automaticamente para o cliente.
 
       // Clear inputs
       const msgInput = document.getElementById('supportMessageInput');
