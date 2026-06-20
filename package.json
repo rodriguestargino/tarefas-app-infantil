@@ -1,7 +1,7 @@
 {
   "name": "tarefas-crianca-app",
   "private": true,
-  "version": "1.0.10",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
