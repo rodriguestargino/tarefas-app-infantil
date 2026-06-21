@@ -1,9 +1,137 @@
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
+
+if (supabase) {
+  App.addListener('appUrlOpen', async (event) => {
+    if (event.url.includes('access_token=')) {
+      try {
+        const url = new URL(event.url);
+        const hashParams = new URLSearchParams(url.hash.substring(1));
+        const access_token = hashParams.get('access_token');
+        const refresh_token = hashParams.get('refresh_token');
+
+        if (access_token && refresh_token) {
+          await supabase.auth.setSession({ access_token, refresh_token });
+        }
+      } catch (e) {
+        console.error('Error parsing app link:', e);
+      }
+    }
+  });
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      if (window.location.hash.includes('access_token')) {
+        // Remove hash fragment to clean up URL
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        
+        // Let the user know and open the dashboard
+        setTimeout(() => {
+          if (window.showToast) {
+            window.showToast('Login realizado com sucesso! 🎉');
+          }
+          if (window.openParentDashboard) {
+            window.openParentDashboard();
+          }
+        }, 500);
+      }
+    }
+  });
+}
+
+export async function signInWithGoogle() {
+  if (!supabase) return { error: 'Serviço de nuvem não configurado 🔌' };
+
+  let redirectTo = window.location.origin;
+  if (Capacitor.isNativePlatform()) {
+    redirectTo = 'com.tarefas.crianca://login-callback';
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo
+    }
+  });
+  return { data, error };
+}
+
+export async function signOut() {
+  if (!supabase) return;
+  await supabase.auth.signOut();
+  setFamilyCode(null);
+}
+
+export async function getUserSession() {
+  if (!supabase) return null;
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) return null;
+  return session.user;
+}
+
+export async function recoverFamilyCode() {
+  if (!supabase) return null;
+  const user = await getUserSession();
+  if (!user) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('families')
+      .select('code')
+      .eq('owner_id', user.id)
+      .single();
+
+    if (error || !data) return null;
+    setFamilyCode(data.code);
+    return data.code;
+  } catch (e) {
+    console.error('Erro ao recuperar código:', e);
+    return null;
+  }
+}
+
+export async function claimFamilyCode(code) {
+  if (!supabase) return null;
+  const user = await getUserSession();
+  if (!user || !code) return null;
+
+  const formattedCode = code.toUpperCase();
+  try {
+    const { data: family, error: fetchError } = await supabase
+      .from('families')
+      .select('owner_id')
+      .eq('code', formattedCode)
+      .single();
+
+    if (fetchError || !family) {
+      console.warn('Código não encontrado ou erro de leitura no banco:', fetchError);
+      return null;
+    }
+
+    if (family.owner_id === null) {
+      const { error: updateError } = await supabase
+        .from('families')
+        .update({ owner_id: user.id })
+        .eq('code', formattedCode);
+
+      if (!updateError) {
+        console.log(`Sucesso: Código ${formattedCode} agora pertence a ${user.email}`);
+        return true;
+      } else {
+        console.error('Erro ao registrar proprietário do código legado:', updateError);
+      }
+    }
+  } catch (e) {
+    console.error('Falha ao tentar reivindicar código:', e);
+  }
+  return false;
+}
 
 const LS_FAMILY_CODE = 'tarefas_family_code';
 
@@ -21,9 +149,16 @@ export function setFamilyCode(code) {
 
 export async function generateFamilyCode() {
   if (!supabase) return null;
+
+  const user = await getUserSession();
+  if (!user) {
+    alert("Você precisa fazer login com Google para gerar um novo código.");
+    return null;
+  }
+
   const code = 'SUPER-' + Math.floor(100000 + Math.random() * 900000);
   try {
-    const { error } = await supabase.from('families').insert([{ code }]);
+    const { error } = await supabase.from('families').insert([{ code, owner_id: user.id }]);
     if (error) {
       // Retry in case of collision
       return generateFamilyCode();
@@ -160,3 +295,20 @@ export function subscribeToChanges(onUpdate) {
     )
     .subscribe();
 }
+
+export async function deleteAccount() {
+  if (!supabase) return { success: false, error: 'Serviço de nuvem não configurado 🔌' };
+  
+  try {
+    const { error } = await supabase.rpc('delete_user_and_data');
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    setFamilyCode(null);
+    return { success: true };
+  } catch (e) {
+    console.error('Falha ao deletar conta:', e);
+    return { success: false, error: 'Falha de conexão com o servidor' };
+  }
+}
+

@@ -103,6 +103,15 @@
 .timer-box { background: linear-gradient(160deg, #1a1a3e, #2d1b69, #1a3a5c); border-radius: 36px; padding: 30px 26px 26px; box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.1); text-align: center; position: relative; max-width: 330px; width: 90%; animation: slideUpBox 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .timer-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.12); border: none; border-radius: 50%; width: 46px; height: 46px; cursor: pointer; font-size: 1.2rem; color: white; display: flex; align-items: center; justify-content: center; transition: background 0.2s; z-index: 10; }
 .timer-close:hover { background: rgba(255,80,80,0.4); }
+
+/* Make the close button smaller specifically inside the settings box to avoid overlapping */
+.settings-box .timer-close {
+  width: 32px;
+  height: 32px;
+  top: 8px;
+  right: 8px;
+  font-size: 1rem;
+}
 .timer-task-emoji { font-size: 3.2rem; margin-bottom: 4px; display: block; animation: floatE 2s ease-in-out infinite; }
 .timer-task-label { font-size: 1.3rem; font-weight: 900; color: white; margin-bottom: 18px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
@@ -223,3 +232,75 @@
     font-size: 0.95rem;
   }
 }
+
+/* ── SUPPORT & JURÍDICO ── */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.faq-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.faq-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: white;
+}
+.faq-icon {
+  font-size: 1.1rem;
+  color: #FFD166;
+  font-weight: 800;
+}
+.faq-answer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+}
+.support-form-box {
+  background: rgba(0, 0, 0, 0.12);
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 14px;
+}
+.legal-link {
+  flex: 1;
+  text-align: center;
+  background: rgba(116, 192, 252, 0.1);
+  border: 1.5px solid rgba(116, 192, 252, 0.25);
+  border-radius: 14px;
+  padding: 8px 12px;
+  transition: all 0.2s;
+}
+.legal-link:hover {
+  background: rgba(116, 192, 252, 0.2);
+  border-color: #74C0FC;
+  transform: translateY(-1px);
+}
+
+/* ── LITE MODE OVERRIDES ── */
+body.lite-mode .task-card { box-shadow: none; border: 1px solid #eee; border-left-width: 6px; }
+body.lite-mode .task-card:hover { transform: none; box-shadow: none; }
+body.lite-mode .timer-box { box-shadow: none; background: #274060; animation: none; }
+body.lite-mode .settings-box { box-shadow: none; background: #274060; animation: none; }
+body.lite-mode .progress-section { box-shadow: none; border: 1px solid #eee; }
+body.lite-mode .timer-start-btn { box-shadow: none; }
+body.lite-mode .timer-start-btn:hover { transform: none; box-shadow: none; }
+body.lite-mode .check-circle { box-shadow: none; transition: none; }
+body.lite-mode .task-card.done .check-circle { transform: none; box-shadow: none; }
+body.lite-mode .progress-fill { animation: none; background: #63E6BE; }

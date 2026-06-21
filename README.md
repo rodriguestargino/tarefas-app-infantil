@@ -50,7 +50,7 @@ Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em sua máquina.
 
 ### 1. Clonar o repositório
 ```bash
-git clone https://github.com/rodriguestargino/tarefas-app-infantil.git
+git clone https://github.com/seu-usuario/tarefas-app-infantil.git
 cd tarefas-app-infantil
 ```
 

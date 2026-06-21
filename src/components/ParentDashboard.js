@@ -15,7 +15,8 @@ import {
   loadSchoolAgenda,
   loadPackedBooks,
   getChildName,
-  setChildName
+  setChildName,
+  clearAllLocalData
 } from '../services/storage.js';
 import {
   getFamilyCode,
@@ -24,7 +25,13 @@ import {
   joinFamily,
   pullCloudData,
   syncLocalToCloud,
-  supabase
+  supabase,
+  signInWithGoogle,
+  signOut,
+  getUserSession,
+  recoverFamilyCode,
+  claimFamilyCode,
+  deleteAccount
 } from '../services/supabase.js';
 
 let gateNum1 = 0;
@@ -79,7 +86,7 @@ export function checkParentGateAnswer() {
     setTimeout(() => inputEl.classList.remove('shake'), 400);
     inputEl.value = '';
     inputEl.placeholder = 'Errado! Tente de novo 🤔';
-    showToast('Resposta incorreta! Tente novamente 🛡️');
+    window.showToast('Resposta incorreta! Tente novamente 🛡️');
   }
 }
 
@@ -132,6 +139,7 @@ function renderActiveTabContent() {
   else if (activeTab === 'rewards')    renderRewardsAdmin(contentEl);
   else if (activeTab === 'activities') renderActivitiesAdmin(contentEl);
   else if (activeTab === 'sync')       renderSyncAdmin(contentEl);
+  else if (activeTab === 'support')    renderSupport(contentEl);
 }
 
 // ─── Tab: Reports ─────────────────────────────────────────────────────────────
@@ -153,7 +161,8 @@ function renderReports(container) {
   const taskCompletionPct   = totalTasksCount > 0
     ? Math.round((completedTasksCount / totalTasksCount) * 100) : 0;
 
-  const booksPackedCount   = packedBooks.length;
+  const packedForDay        = packedBooks[dayIdx] || [];
+  const booksPackedCount    = todayBooks.filter(b => packedForDay.includes(b)).length;
   const totalBooksCount    = todayBooks.length;
   const booksCompletionPct = totalBooksCount > 0
     ? Math.round((booksPackedCount / totalBooksCount) * 100) : 0;
@@ -372,17 +381,52 @@ function renderSyncAdmin(container) {
   renderParentCloudSyncDetails();
 }
 
-function renderParentCloudSyncDetails() {
+async function renderParentCloudSyncDetails() {
   const statusArea = document.getElementById('parentCloudStatusArea');
   if (!statusArea) return;
 
-  const code = getFamilyCode();
+  if (!supabase) {
+    statusArea.innerHTML = `<div style="padding:16px; color:#FF6B6B;">Serviço de Nuvem não configurado.</div>`;
+    return;
+  }
+
+  const user = await getUserSession();
+  let code = getFamilyCode();
+
+  if (user && !code) {
+    code = await recoverFamilyCode();
+  }
 
   if (code) {
+    let isUnowned = false;
+    try {
+      const { data, error } = await supabase
+        .from('families')
+        .select('owner_id')
+        .eq('code', code.toUpperCase())
+        .single();
+      if (!error && data && data.owner_id === null) {
+        isUnowned = true;
+      }
+    } catch (e) {
+      console.error('Erro ao verificar dono do código:', e);
+    }
+
     statusArea.innerHTML = `
       <div style="background:rgba(99,230,190,0.1); border:2px solid #20c997; border-radius:20px; padding:16px; margin-bottom:16px; text-align:center;">
         <div style="font-size:1.1rem; font-weight:800; color:#63E6BE; margin-bottom:8px;">Sincronização Ativada! ☁️</div>
+        ${user ? `<div style="font-size:0.8rem; color:white; margin-bottom:8px;">Logado como: ${user.email} <button onclick="window.parentGoogleLogout()" style="background:transparent; border:none; color:#FF6B6B; text-decoration:underline;">Sair</button></div>` : ''}
+        ${!user && isUnowned ? `
+          <div style="background:rgba(255,255,255,0.05); border-radius:12px; padding:10px; margin-bottom:12px; border: 1px dashed rgba(255,255,255,0.2);">
+            <span style="font-size:0.8rem; color:white; display:block; margin-bottom:6px;">🔑 Código não protegido contra perdas.</span>
+            <button class="settings-save-btn" onclick="window.parentGoogleLogin()" style="background:white; color:#333; font-size:0.85rem; padding:6px 12px; border-radius:12px; font-weight:700; cursor:pointer;">Vincular Conta Google</button>
+          </div>
+        ` : ''}
         <div style="font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px;">Seu Código de Família:</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
+          <button onclick="window.parentCopyCode('${code}')" style="background:rgba(255,255,255,0.15); border:none; border-radius:12px; padding:10px 16px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-size:0.9rem; font-weight:700;" title="Copiar Código">📋 Copiar</button>
+          <button onclick="window.parentShareCode('${code}')" style="background:rgba(255,255,255,0.15); border:none; border-radius:12px; padding:10px 16px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; font-size:0.9rem; font-weight:700;" title="Compartilhar Código">📤 Compartilhar</button>
+        </div>
         <div style="font-size:1.6rem; font-weight:900; letter-spacing:2px; color:#FFD166; background:rgba(0,0,0,0.2); padding:8px 16px; border-radius:12px; display:inline-block; margin-bottom:12px;">${code}</div>
         
         <p style="font-size:0.8rem; color:rgba(255,255,255,0.6); margin-top:0;">Use este código no outro aparelho para vincular os dados.</p>
@@ -391,25 +435,180 @@ function renderParentCloudSyncDetails() {
           <button class="settings-save-btn" onclick="window.parentForceCloudPull()" style="background:#20c997; width:auto; font-size:0.85rem; box-shadow:none;">Atualizar Agora 🔄</button>
           <button class="settings-save-btn" onclick="window.parentDisconnectFamily()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; width:auto; font-size:0.85rem; box-shadow:none;">Desativar Nuvem</button>
         </div>
+
+        ${user ? `
+          <!-- DANGER ZONE -->
+          <div style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; text-align: left;">
+            <h4 style="color:#FF6B6B; font-size:0.9rem; margin-top:0; margin-bottom:6px; font-weight:800;">Zona de Perigo ⚠️</h4>
+            <p style="color:rgba(255,255,255,0.5); font-size:0.75rem; margin-top:0; margin-bottom:12px; line-height:1.3;">
+              Ao excluir sua conta, todos os seus dados da nuvem e configurações locais serão permanentemente apagados de forma irreversível.
+            </p>
+            <button class="settings-save-btn" onclick="window.parentDeleteAccountAndData()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; font-size:0.85rem; padding:8px 16px; border-radius:12px; font-weight:800; cursor:pointer; width:100%; box-shadow:none;">
+              Excluir Conta e Apagar Dados 🗑️
+            </button>
+          </div>
+        ` : ''}
       </div>
     `;
   } else {
-    statusArea.innerHTML = `
-      <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:20px 16px; text-align:center; margin-bottom:16px;">
-        <button class="settings-save-btn" onclick="window.parentCreateFamilyGroup()" style="background:linear-gradient(135deg, #7048E8, #C5A3FF); box-shadow:0 4px 12px rgba(112,72,232,0.4); font-size:1.1rem; padding:12px 24px; border-radius:24px; margin-bottom:16px;">
-          Ativar Sincronização em Nuvem ☁️
-        </button>
+    if (!user) {
+      statusArea.innerHTML = `
+        <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:20px 16px; text-align:center; margin-bottom:16px;">
+          <p style="color:white; font-size:0.9rem; margin-top:0; margin-bottom:12px; font-weight:600;">Para gerar um novo código e salvar na nuvem, é necessário fazer login.</p>
+          <button class="settings-save-btn" onclick="window.parentGoogleLogin()" style="background:white; color:#333; font-size:1.05rem; padding:10px 20px; border-radius:24px; margin-bottom:16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            Login com Google
+          </button>
+          
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:16px 0;">
+          
+          <div style="font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:8px; font-weight:700;">Já possui um código de outro aparelho?</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
+            <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
+          </div>
+        </div>
+      `;
+    } else {
+      statusArea.innerHTML = `
+        <div style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.06); border-radius:20px; padding:20px 16px; text-align:center; margin-bottom:16px;">
+          <div style="font-size:0.8rem; color:white; margin-bottom:16px; background:rgba(0,0,0,0.2); padding:6px; border-radius:12px; display:inline-block;">
+            Logado como: ${user.email} <button onclick="window.parentGoogleLogout()" style="background:transparent; border:none; color:#FF6B6B; text-decoration:underline; cursor:pointer;">Sair</button>
+          </div>
+          <button class="settings-save-btn" onclick="window.parentCreateFamilyGroup()" style="background:linear-gradient(135deg, #7048E8, #C5A3FF); box-shadow:0 4px 12px rgba(112,72,232,0.4); font-size:1.1rem; padding:12px 24px; border-radius:24px; margin-bottom:16px;">
+            Gerar Novo Código de Família ☁️
+          </button>
+          
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:16px 0;">
+          
+          <div style="font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:8px; font-weight:700;">Já possui um código de outro aparelho?</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
+            <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
+          </div>
+
+          <!-- DANGER ZONE -->
+          <div style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; text-align: left;">
+            <h4 style="color:#FF6B6B; font-size:0.9rem; margin-top:0; margin-bottom:6px; font-weight:800;">Zona de Perigo ⚠️</h4>
+            <p style="color:rgba(255,255,255,0.5); font-size:0.75rem; margin-top:0; margin-bottom:12px; line-height:1.3;">
+              Ao excluir sua conta, todas as suas configurações locais e dados sincronizados na nuvem serão apagados permanentemente de forma irreversível.
+            </p>
+            <button class="settings-save-btn" onclick="window.parentDeleteAccountAndData()" style="background:rgba(255,107,107,0.15); border:2px solid #FF6B6B; color:#FF6B6B; font-size:0.85rem; padding:8px 16px; border-radius:12px; font-weight:800; cursor:pointer; width:100%; box-shadow:none;">
+              Excluir Conta e Apagar Dados 🗑️
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  }
+}
+
+// ─── Tab: Support ─────────────────────────────────────────────────────────────
+
+function renderSupport(container) {
+  // Common FAQs
+  const faqs = [
+    {
+      q: "Como mudar o nome do meu filho? 🦸",
+      a: "Basta digitar o novo nome no campo \"Nome do Pequeno Super-Herói\" no topo desta Central dos Pais e clicar em \"Salvar\"."
+    },
+    {
+      q: "As tarefas concluídas resetam sozinhas? 🔄",
+      a: "Sim! Ao mudar o dia, as tarefas diárias e os livros organizados são resetados automaticamente. As estrelas acumuladas ficam salvas no cofrinho de prêmios."
+    },
+    {
+      q: "Como sincronizar com outro celular? ☁️",
+      a: "Vá na aba \"Nuvem\" e clique em \"Ativar Sincronização em Nuvem\" para gerar um Código de Família. Insira este código no outro aparelho para vincular os dados."
+    }
+  ];
+
+  // Capture simple platform information
+  const userAgent = navigator.userAgent;
+  let platform = "Web Browser";
+  if (userAgent.match(/Android/i)) {
+    platform = "Android Device";
+  } else if (userAgent.match(/iPhone|iPad|iPod/i)) {
+    platform = "iOS Device";
+  }
+
+  // App version is 1.0.6 (from package.json)
+  const appVersion = "1.0.6";
+
+  // Build FAQ HTML
+  const faqHtml = faqs.map((faq, idx) => `
+    <div class="faq-item" onclick="window.toggleFaqAnswer(${idx})">
+      <div class="faq-question">
+        <span>${faq.q}</span>
+        <span class="faq-icon" id="faq-icon-${idx}">＋</span>
+      </div>
+      <div class="faq-answer" id="faq-answer-${idx}" style="display:none;">
+        ${faq.a}
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <div style="max-height: 480px; overflow-y: auto; padding-right: 4px;">
+      
+      <!-- FAQ SECTION -->
+      <div style="margin-bottom: 20px;">
+        <h3 style="color:white; margin-bottom:10px; font-weight:800;">❓ Perguntas Frequentes (FAQ)</h3>
+        <div class="faq-list">${faqHtml}</div>
+      </div>
+
+      <hr style="border:none; border-top:1.5px solid rgba(255,255,255,0.08); margin:16px 0;">
+
+      <!-- SUPPORT FORM -->
+      <div style="margin-bottom: 20px;">
+        <h3 style="color:white; margin-bottom:8px; font-weight:800;">✉️ Fale Conosco / Suporte</h3>
+        <p style="color:rgba(255,255,255,0.6); font-size:0.8rem; margin:0 0 12px 0;">
+          Dúvidas, sugestões ou problemas? Envie um ticket para o nosso suporte no Jira Service Management (JSM).
+        </p>
         
-        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:16px 0;">
-        
-        <div style="font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:8px; font-weight:700;">Já possui um código de outro aparelho?</div>
-        <div style="display:flex; gap:8px; justify-content:center;">
-          <input type="text" id="parentJoinCodeInput" placeholder="Ex: SUPER-123456" maxlength="12" class="settings-name-input" style="background:rgba(255,255,255,0.1); color:white; margin-bottom:0; text-transform:uppercase; max-width:200px;">
-          <button class="settings-save-btn" onclick="window.parentConnectFamily()" style="width:auto; white-space:nowrap; background:#74C0FC;">Vincular</button>
+        <div class="support-form-box">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <input type="text" id="supportNameInput" class="settings-name-input" placeholder="Seu nome..." style="background:rgba(255,255,255,0.07); color:white; margin-bottom:0;">
+            <input type="email" id="supportEmailInput" class="settings-name-input" placeholder="Seu e-mail..." style="background:rgba(255,255,255,0.07); color:white; margin-bottom:0;">
+            
+            <select id="supportSubjectInput" class="settings-name-input" style="background:rgba(255,255,255,0.07); color:white; margin-bottom:0; height:42px; padding:0 12px;">
+              <option value="" disabled selected style="color:#999;">Assunto...</option>
+              <option value="Dúvida sobre o App" style="color:black;">❓ Dúvida sobre o App</option>
+              <option value="Relato de Bug" style="color:black;">🐛 Relatar um Bug/Problema</option>
+              <option value="Sugestão de Melhoria" style="color:black;">💡 Sugestão de Melhoria</option>
+              <option value="Outro assunto" style="color:black;">🎨 Outros</option>
+            </select>
+
+            <textarea id="supportMessageInput" class="settings-name-input" placeholder="Descreva sua dúvida ou problema com detalhes..." style="background:rgba(255,255,255,0.07); color:white; margin-bottom:0; min-height:80px; height:auto; padding:8px 12px; font-family:inherit; resize:vertical;"></textarea>
+            
+            <!-- Diagnostic Metadata -->
+            <div style="background:rgba(0,0,0,0.15); border-radius:10px; padding:8px 12px; font-size:0.75rem; color:rgba(255,255,255,0.5); line-height:1.3; border: 1px solid rgba(255,255,255,0.04);">
+              <b>Informações de Diagnóstico (Enviadas no ticket):</b><br>
+              Plataforma: <span id="metaPlatform">${platform}</span> &bull; Versão: v${appVersion}<br>
+              <span style="font-size:0.65rem; word-break:break-all;">User-Agent: ${userAgent}</span>
+            </div>
+
+            <button class="settings-save-btn" onclick="window.sendSupportTicket()" style="background:linear-gradient(135deg, #7048E8, #C5A3FF); color:white; width:100%; font-weight:800; font-size:0.95rem; padding:10px; border-radius:12px; margin-top:4px;">
+              Enviar Ticket de Suporte 🚀
+            </button>
+          </div>
         </div>
       </div>
-    `;
-  }
+
+      <hr style="border:none; border-top:1.5px solid rgba(255,255,255,0.08); margin:16px 0;">
+
+      <!-- LEGAL / COMPLIANCE -->
+      <div style="margin-bottom: 12px;">
+        <h3 style="color:white; margin-bottom:8px; font-weight:800;">⚖️ Jurídico e Conformidade</h3>
+        <p style="color:rgba(255,255,255,0.5); font-size:0.75rem; line-height:1.4; margin-bottom:12px;">
+          Este aplicativo é direcionado para famílias e crianças. Respeitamos a privacidade e estamos em conformidade com as diretrizes da Google Play Store (políticas de Famílias) e legislações vigentes.
+        </p>
+        <div style="display:flex; gap:10px;">
+          <a href="https://seu-site.github.io/politica-privacidade.html" target="_blank" class="legal-link" style="color:#74C0FC; text-decoration:none; font-weight:700; font-size:0.85rem;">🔒 Política de Privacidade</a>
+          <a href="https://seu-site.github.io/termos-uso.html" target="_blank" class="legal-link" style="color:#74C0FC; text-decoration:none; font-weight:700; font-size:0.85rem;">📄 Termos de Uso</a>
+        </div>
+      </div>
+
+    </div>
+  `;
 }
 
 // ─── Window bindings — Rewards ────────────────────────────────────────────────
@@ -423,12 +622,12 @@ window.handleRedemptionApproval = (reqId, approved) => {
 
   if (approved) {
     triggerHapticSuccess();
-    showToast('🏆 Prêmio aprovado! Divirta-se!');
+    window.showToast('🏆 Prêmio aprovado! Divirta-se!');
   } else {
     const balance = loadStarBalance();
     saveStarBalance(balance + req.cost);
     triggerHapticSuccess();
-    showToast('❌ Solicitação recusada. Estrelas devolvidas!');
+    window.showToast('❌ Solicitação recusada. Estrelas devolvidas!');
   }
 
   saveRedemptionRequests(list);
@@ -525,7 +724,7 @@ window.saveParentKidName = () => {
   if (span) span.textContent = name;
 
   triggerHapticSuccess();
-  showToast(`Nome atualizado para: ${name}! 🦸`);
+  window.showToast(`Nome atualizado para: ${name}! 🦸`);
 };
 
 window.parentShowTaskForm = () => {
@@ -567,7 +766,7 @@ window.parentDeleteTask = (taskId) => {
   }
 
   triggerHapticImpact();
-  showToast('🗑️ Tarefa excluída!');
+  window.showToast('🗑️ Tarefa excluída!');
 
   renderParentTasksList();
 
@@ -581,8 +780,50 @@ window.parentDisconnectFamily = () => {
   setFamilyCode(null);
   triggerHapticImpact();
   renderActiveTabContent();
-  showToast('🔌 Desconectado com sucesso!');
+  window.showToast('🔌 Desconectado com sucesso!');
   setTimeout(() => window.location.reload(), 1000);
+};
+
+window.parentGoogleLogin = async () => {
+  window.showToast('Redirecionando para login...');
+  const { error } = await signInWithGoogle();
+  if (error) {
+    alert("Erro ao fazer login: " + (error.message || error));
+  }
+};
+
+window.parentGoogleLogout = async () => {
+  window.showToast('Saindo...');
+  await signOut();
+  renderActiveTabContent();
+  setTimeout(() => window.location.reload(), 1000);
+};
+
+window.parentCopyCode = async (code) => {
+  try {
+    await navigator.clipboard.writeText(code);
+    window.showToast('📋 Código copiado!');
+    triggerHapticSuccess();
+  } catch (err) {
+    window.showToast('Erro ao copiar código.');
+  }
+};
+
+window.parentShareCode = async (code) => {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Código do Minhas Tarefas',
+        text: `Use este código para sincronizar o app Minhas Tarefas: ${code}`
+      });
+      triggerHapticSuccess();
+    } catch (err) {
+      console.error('Erro ao compartilhar', err);
+    }
+  } else {
+    // Fallback to copy if Web Share API is not supported
+    window.parentCopyCode(code);
+  }
 };
 
 window.parentConnectFamily = async () => {
@@ -595,13 +836,13 @@ window.parentConnectFamily = async () => {
   const input = document.getElementById('parentJoinCodeInput');
   if (!input) return;
   const code = input.value.trim();
-  if (!code) { showToast('⚠️ Por favor, digite o código de família!'); return; }
+  if (!code) { window.showToast('⚠️ Por favor, digite o código de família!'); return; }
 
-  showToast('🔌 Conectando...');
+  window.showToast('🔌 Conectando...');
   const res = await joinFamily(code);
   if (res.success) {
     triggerHapticSuccess();
-    showToast('👨‍👩‍👧‍👦 Conectado à família com sucesso!');
+    window.showToast('👨‍👩‍👧‍👦 Conectado à família com sucesso!');
     await pullCloudData();
     renderActiveTabContent();
     setTimeout(() => window.location.reload(), 1200);
@@ -618,7 +859,7 @@ window.parentCreateFamilyGroup = async () => {
     return;
   }
   
-  showToast('⚡ Criando grupo...');
+  window.showToast('⚡ Criando grupo...');
   const code = await generateFamilyCode();
   if (code) {
     triggerHapticSuccess();
@@ -651,14 +892,147 @@ window.parentCreateFamilyGroup = async () => {
 };
 
 window.parentForceCloudPull = async () => {
-  showToast('🔄 Sincronizando...');
+  window.showToast('🔄 Sincronizando...');
   const hasChanges = await pullCloudData();
   triggerHapticSuccess();
-  showToast('💾 Sincronizado com a nuvem!');
+  window.showToast('💾 Sincronizado com a nuvem!');
   if (hasChanges) {
     setTimeout(() => window.location.reload(), 1000);
   } else {
     renderActiveTabContent();
+  }
+};
+
+window.parentDeleteAccountAndData = async () => {
+  const confirm1 = confirm("⚠️ ATENÇÃO: Tem certeza absoluta que deseja excluir sua conta e APAGAR todos os seus dados na nuvem? Esta ação não pode ser desfeita!");
+  if (!confirm1) return;
+  
+  const confirm2 = confirm("🚨 CONFIRMAÇÃO FINAL: Isso desconectará todos os aparelhos da família e apagará o progresso permanentemente. Deseja mesmo prosseguir?");
+  if (!confirm2) return;
+
+  window.showToast('Excluindo conta...');
+  triggerHapticImpact();
+
+  const res = await deleteAccount();
+  if (res.success) {
+    // 1. Limpa todas as configurações salvas em cache local
+    clearAllLocalData();
+    
+    // 2. Notifica o usuário e reinicia a aplicação
+    triggerHapticSuccess();
+    alert("Sua conta e dados foram apagados com sucesso. O aplicativo será reiniciado.");
+    window.location.reload();
+  } else {
+    triggerHapticImpact();
+    alert("Não foi possível excluir a conta: " + res.error);
+  }
+};
+
+
+window.toggleFaqAnswer = (idx) => {
+  const answer = document.getElementById(`faq-answer-${idx}`);
+  const icon = document.getElementById(`faq-icon-${idx}`);
+  if (!answer || !icon) return;
+
+  const isHidden = answer.style.display === 'none';
+  answer.style.display = isHidden ? 'block' : 'none';
+  icon.textContent = isHidden ? '－' : '＋';
+  triggerHapticImpact();
+};
+
+window.sendSupportTicket = async () => {
+  const name = document.getElementById('supportNameInput')?.value.trim();
+  const email = document.getElementById('supportEmailInput')?.value.trim();
+  const subject = document.getElementById('supportSubjectInput')?.value;
+  const message = document.getElementById('supportMessageInput')?.value.trim();
+
+  if (!name || !email || !subject || !message) {
+    alert('Por favor, preencha todos os campos do formulário para podermos ajudar! ✉️');
+    return;
+  }
+
+  if (!email.includes('@')) {
+    alert('Por favor, digite um e-mail válido! ✉️');
+    return;
+  }
+
+  // Verifica se o Supabase está configurado
+  if (!supabase) {
+    triggerHapticImpact();
+    alert('O desenvolvedor ainda não configurou as credenciais do Supabase na nuvem!\n\nO envio de tickets de suporte requer a conexão com o servidor.');
+    return;
+  }
+
+  // Get the submit button and show loading state
+  const submitBtn = document.querySelector('.support-form-box button');
+  const originalBtnText = submitBtn ? submitBtn.textContent : 'Enviar Ticket de Suporte 🚀';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando chamado... ⏳';
+    submitBtn.style.opacity = '0.7';
+  }
+
+  const appVersion = "1.0.4";
+  const userAgent = navigator.userAgent;
+  let platform = "Web Browser";
+  if (userAgent.match(/Android/i)) {
+    platform = "Android Device";
+  } else if (userAgent.match(/iPhone|iPad|iPod/i)) {
+    platform = "iOS Device";
+  }
+
+  const diagnostico = `Plataforma: ${platform} | Versão do App: v${appVersion} | User-Agent: ${userAgent}`;
+
+  try {
+    const { data, error } = await supabase.functions.invoke('suporte-jira', {
+      body: {
+        nome: name,
+        emailCliente: email,
+        tipoDuvida: subject,
+        descricao: message,
+        diagnostico,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Falha ao chamar a Edge Function.');
+    }
+
+    if (data && data.success) {
+      triggerHapticSuccess();
+      const ticketInfo = data.ticketKey ? ` (${data.ticketKey})` : '';
+      window.showToast(`📬 Ticket${ticketInfo} enviado com sucesso! 🚀`);
+
+      // Jira Service Management envia notificações de ticket automaticamente para o cliente.
+
+      // Clear inputs
+      const msgInput = document.getElementById('supportMessageInput');
+      if (msgInput) msgInput.value = '';
+
+      const nameInput = document.getElementById('supportNameInput');
+      const emailInput = document.getElementById('supportEmailInput');
+      const subjectInput = document.getElementById('supportSubjectInput');
+      if (nameInput) nameInput.value = '';
+      if (emailInput) emailInput.value = '';
+      if (subjectInput) subjectInput.value = '';
+
+      // Close parent dashboard after a brief delay
+      setTimeout(() => {
+        closeParentDashboard();
+      }, 1500);
+    } else {
+      throw new Error(data?.error || 'Resposta inesperada do servidor.');
+    }
+  } catch (err) {
+    console.error('Erro ao enviar ticket:', err);
+    triggerHapticImpact();
+    alert('Erro ao enviar o ticket de suporte. Verifique sua conexão com a internet e tente novamente. 😥');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText;
+      submitBtn.style.opacity = '1';
+    }
   }
 };
 
@@ -671,12 +1045,3 @@ window.openParentDashboard   = openParentDashboard;
 window.closeParentDashboard  = closeParentDashboard;
 window.setParentTab          = setParentTab;
 
-// ─── Local toast helper ───────────────────────────────────────────────────────
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}

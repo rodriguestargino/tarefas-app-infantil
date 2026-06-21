@@ -57,6 +57,8 @@ tarefas-app/
 │       ├── components.css   # Estilos de cards, modais, botões, progresso
 │       ├── animations.css   # Keyframes (nuvens, estrelas, confetes)
 │       └── agenda.css       # Estilos das telas Agenda e Eventos
+├── assets/                  # Ícones e splash screens originais para o Capacitor
+├── icon_designs/            # Imagens originais e assets de design guardados para alterações futuras
 └── android/                 # Projeto nativo Android (gerado pelo Capacitor)
 ```
 
@@ -115,6 +117,7 @@ npm run preview  # Preview do build de produção
 npm run test     # Roda testes com Vitest
 npx cap sync android  # Sincroniza build web com projeto Android
 npx cap open android  # Abre no Android Studio
+npx capacitor-assets generate --android  # Gera ícones e splash screens nativos a partir da pasta assets/
 ```
 
 ---
@@ -132,8 +135,8 @@ npx cap open android  # Abre no Android Studio
 9. **Testes** — colocados junto aos arquivos fonte com sufixo `.test.js` (ex: `ProgressSection.test.js`).
 10. **CSS modular** — estilos separados por domínio em `src/styles/` e importados via `src/style.css`.
 11. **Reportes Concisos** — Ao finalizar uma tarefa, o assistente (IA) deve responder de forma extremamente concisa, informando apenas os pontos principais (ex: "Done", "Success", "Implemented"). Nenhuma explicação detalhada deve ser dada a menos que o usuário solicite explicitamente.
-12. **Commits** — As mensagens de commit devem ser escritas sempre em inglês e seguir o padrão *Conventional Commits* (ex: `feat(scope): message`, `fix(scope): message`, `style: message`, `refactor: message`).
-13. **Versionamento** — Sempre que um novo APK for gerado, a versão do app deve ser incrementada em `package.json` e `android/app/build.gradle` (`versionCode` e `versionName`).
+12. **Commits** — As mensagens de commit devem obrigatoriamente seguir o padrão do git (*Conventional Commits*) com prefixos como `chore`, `feat`, `fix`, etc. Exemplos: `chore: update folder structure`, `feat: add new icon`, `fix: header alignment`.
+13. **Versionamento** — SEMPRE que for solicitada a geração de um novo build ou APK, a versão do app DEVE OBRIGATORIAMENTE ser incrementada ANTES do build em `package.json` e `android/app/build.gradle` (`versionCode` e `versionName`). O assistente deve sempre verificar se a versão foi incrementada.
 
 ---
 
@@ -145,3 +148,29 @@ npx cap open android  # Abre no Android Studio
 - **Sem dependências externas pesadas**: Sons são sintetizados via Web Audio API, sem arquivos de áudio.
 - **Reset diário automático**: Tarefas e livros empacotados são resetados na mudança de dia.
 - **Não expor `.env`**: Credenciais Supabase estão no `.env` (gitignored). Usar `.env.example` como referência.
+
+---
+
+## Suporte e Integrações Externas (Supabase Edge Functions)
+
+O fluxo de suporte ao cliente foi implementado utilizando **Supabase Edge Functions** para manter todas as chaves de API ocultas no backend (Server-side). O fluxo se baseia em duas funções:
+
+### 1. `suporte-jira` (Edge Function)
+- Recebe a requisição do formulário da Central dos Pais.
+- Conecta na API do Jira Cloud v3 (`/rest/api/3/issue`) usando HTTP Basic Auth.
+- **Secrets configurados no Supabase CLI:** `JIRA_DOMAIN`, `JIRA_EMAIL` e `JIRA_API_TOKEN`.
+- O payload utiliza o **Atlassian Document Format (ADF)** para embutir as informações do formulário e de diagnóstico (OS, versão do app).
+- O Jira Issue Type utilizado é o `Task` no projeto de key `SUP`. Cuidado: `"Get IT help"` é um Request Type de portal, e não deve ser usado como Issue Type na API.
+
+### 2. `enviar-email` (Edge Function)
+- Função transacional criada para notificar o cliente via e-mail utilizando a **API do Resend**.
+- Disparada pelo frontend do app (`ParentDashboard.js`) imediatamente após a criação bem-sucedida do ticket no Jira.
+- **Secret configurado:** `RESEND_API_KEY`.
+
+### Jira Automation (Email de Resolução)
+Como a API `/rest/api/3/issue` não cria tickets em nome do cliente automaticamente (o criador é o dono do Token), o Jira não envia e-mails nativos de resolução do Service Desk de volta ao cliente. 
+Para suprir essa necessidade de forma "No-Code":
+- Foi configurada/recomendada uma **Jira Automation Rule**.
+- **Trigger:** Transition to `Done`.
+- **Action:** Send Email.
+- O destino extrai o e-mail do cliente através de Regex aplicada no corpo do ticket: `{{issue.description.match("([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)")}}`.

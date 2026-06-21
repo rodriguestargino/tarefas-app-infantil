@@ -118,3 +118,12 @@ body {
   z-index: 100;
   pointer-events: none;
 }
+
+/* ── LITE MODE OVERRIDES ── */
+body.lite-mode { background: #d4f1c4; }
+body.lite-mode .title-box { background: #FF9DC1; box-shadow: none; }
+body.lite-mode .day-btn.active { box-shadow: none; transform: none; }
+body.lite-mode .celebration { box-shadow: none; animation: none; }
+body.lite-mode .reset-btn { box-shadow: none; transition: none; }
+body.lite-mode .reset-btn:hover { transform: none; box-shadow: none; }
+body.lite-mode .sun-icon { filter: none; animation: none; }

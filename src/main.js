@@ -20,7 +20,7 @@ import {
 import { triggerHapticImpact, triggerHapticSuccess } from './services/haptics.js';
 import { renderAgenda, getSelectedDayIdx, setSelectedDayIdx } from './components/AgendaSection.js';
 import { renderEvents } from './components/EventsSection.js';
-import { pullCloudData, subscribeToChanges, getFamilyCode } from './services/supabase.js';
+import { pullCloudData, subscribeToChanges, getFamilyCode, claimFamilyCode, getUserSession } from './services/supabase.js';
 import { warmUpAudio, playDoneSound } from './services/audio.js';
 import { renderTasks } from './components/TaskCard.js';
 import { updateStars, updateProgress } from './components/ProgressSection.js';
@@ -150,6 +150,7 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 1800);
 }
+window.showToast = showToast;
 
 /* ═══════════════ GLOBAL WINDOW BINDINGS ═══════════════ */
 window.closeTimerModal = () => {
@@ -501,7 +502,25 @@ window.clearApprovedRedemption = (reqId) => {
 };
 
 /* ═══════════════ INITIALIZATION ═══════════════ */
+function detectAndApplyLiteMode() {
+  const ua = navigator.userAgent;
+  let isLegacy = false;
+  if (/Android [4-8]\./i.test(ua)) {
+    isLegacy = true;
+  } else {
+    const match = ua.match(/Chrome\/(\d+)/i);
+    if (match && parseInt(match[1]) < 75) {
+      isLegacy = true;
+    }
+  }
+  if (isLegacy) {
+    document.body.classList.add('lite-mode');
+  }
+}
+
 async function init() {
+  detectAndApplyLiteMode();
+
   // Process any stars pending from previous days before loading the UI
   processPastDaysStars();
 
@@ -512,6 +531,10 @@ async function init() {
 
   const code = getFamilyCode();
   if (code) {
+    const user = await getUserSession();
+    if (user) {
+      await claimFamilyCode(code);
+    }
     // Pull latest data from remote Supabase cloud
     await pullCloudData();
     // Reload state in memory

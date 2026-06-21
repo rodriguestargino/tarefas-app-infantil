@@ -226,7 +226,11 @@ export function toggleEventsEditor() {
 export function selectEventType(type) {
   selectedType = type;
   triggerHapticImpact();
-  renderEvents();
+  
+  const buttons = document.querySelectorAll('.event-type-btn');
+  buttons.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === type);
+  });
 }
 
 export function editCalendarEvent(id) {
