@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Minhas Tarefas</string>
-    <string name="title_activity_main">Minhas Tarefas</string>
+    <string name="app_name">Super Rotina Kids</string>
+    <string name="title_activity_main">Super Rotina Kids</string>
     <string name="package_name">com.tarefas.crianca</string>
     <string name="custom_url_scheme">com.tarefas.crianca</string>
 </resources>
